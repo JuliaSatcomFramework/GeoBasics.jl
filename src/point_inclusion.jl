@@ -20,4 +20,5 @@ end
 # This is a catchall method for extension for other types
 in_exit_early(p, x) = in_exit_early(p, polyareas(Cartesian, x), bboxes(Cartesian, x))
 
-Base.in(p::Union{VALID_POINT, LATLON}, x::FastInType) = in_exit_early(p, x)
+Base.in(p::Union{VALID_POINT, LATLON}, geom::FastInGeometry) = in_exit_early(p, geom)
+Base.in(p::Union{VALID_POINT, LATLON}, dmn::FastInDomain) = any(el -> in_exit_early(p, el), dmn)

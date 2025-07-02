@@ -6,6 +6,16 @@ The code is inspired by the implementation in the python library at https://gith
 # Force a specific orientation to a ring
 force_orientation(o::OrientationType, r::VALID_RING) = orientation(r) == o ? r : reverse(r)
 
+
+# Enforce winding/orientation as per GeoJSON, with outer rings being CCW and inner rings being CW
+function fix_orientation(poly::POLY_CART)
+    outer, inners = rings(poly) |> Iterators.peel
+    orientation(outer) == CCW && all(r -> orientation(r) == CW, inners) && return poly
+    outer = force_orientation(CCW, outer)
+    inners = map(r -> force_orientation(CW, r), inners)
+    PolyArea([outer, inners...])
+end
+
 # Checks if a ring has an antimeridian crossing. This assumes that any segment spanning more than 180° in longitude is crossing the antimeridian
 function has_antimeridian(ring::VALID_RING)
     any(segments(ring)) do segment
@@ -99,8 +109,8 @@ See also [`GeoBorders`](@ref), [`GeoBorders`](@ref), [`polyareas`](@ref), [`bbox
 """
 function split_antimeridian(polyareas_vector::Vector{POLY_CART{T}}) where T <: AbstractFloat
     mapreduce(vcat, polyareas_vector) do poly
-        outer, inners... = rings(poly)
-        has_antimeridian(outer) || return [poly] # If there is no antimeridian crossing in the outer ring, we simply return a Multi only containing the original polyarea
+        outer, inners = rings(poly) |> Iterators.peel
+        has_antimeridian(outer) || return [fix_orientation(poly)] # If there is no antimeridian crossing in the outer ring, we simply return a vector only containing the original polyarea with the orientation fixed
         # We start by splitting the outer rings of the polyarea
         splitted_outer = split_antimeridian(outer, CCW)
         # For each of the resulting outers
@@ -110,7 +120,7 @@ function split_antimeridian(polyareas_vector::Vector{POLY_CART{T}}) where T <: A
             splitted_inner = split_antimeridian(inner, CW)
             # We now iterate through all the splitted outers, checking if the inner ring belongs to it
             for r in splitted_inner
-                # We only check inclusion of the first point of the ring
+                # We only check inclusion of the first point of the ring as we assume the inner rings were holes and so all theirs vertices are fully included in the outer ring
                 p = vertex(r, 1)
                 placed = false
                 for this_poly in polyareas

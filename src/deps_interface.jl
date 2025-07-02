@@ -1,0 +1,1 @@
+GeoPlottingHelpers.geom_iterable(geom::FastInGeometry) = polyareas(geom)

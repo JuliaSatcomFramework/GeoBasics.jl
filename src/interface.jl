@@ -24,7 +24,7 @@ Returns an iterable of the 2D `PolyArea`s associated to the input geometry defin
 
 It is possible to specify whether the returned `PolyArea`s should contains `Point` in either `LatLon` or `Cartesian` coordinates by passing `LatLon` or `Cartesian` as first argument.
 
-If not provided, the crs defaults to `LatLon`.
+If not provided, the crs defaults to `Cartesian`.
 
 See also [`geoborders`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref).
 
@@ -45,7 +45,7 @@ Returns an iterable of the 2D `Box`s associated to the input geometry defined ov
 
 It is possible to specify whether the returned `Box`s should contains `Point` in either `LatLon` or `Cartesian` coordinates by passing `LatLon` or `Cartesian` as first argument.
 
-If not provided, the crs defaults to `LatLon`.
+If not provided, the crs defaults to `Cartesian`.
 
 See also [`geoborders`](@ref), [`polyareas`](@ref), [`FastInGeometry`](@ref).
 
@@ -62,13 +62,15 @@ bboxes(::Type{Cartesian}, b::GeoBorders) = b.cart_bboxes
 # Fallbacks
 for nm in (:polyareas, :bboxes)
     # Version without CRS which defaults to LatLon
-    @eval $nm(x) = $nm(LatLon, x)
+    @eval $nm(x) = $nm(Cartesian, x)
     # Version which tries to extract the `GeoBorders` field from the input
     @eval function $nm(T::VALID_CRS, x) 
         exception = ArgumentError($(string("The `GeoBorders` connected to the input could not be automatically extracted.\nConsider adding a custom method for `geoborders` or more explicitly for the called `", nm, "` function.")))
         return $nm(T, geoborders(x; exception))
     end
 end
+
+bboxes(T::VALID_CRS, dmn::FastInDomain) = Iterators.flatten(bboxes(T, el) for el in dmn)
 
 # Methods for polyareas for types from Meshes. This are mostly used for the construction of GeoBorders objects
 function polyareas(T::VALID_CRS, m::VALID_MULTI)

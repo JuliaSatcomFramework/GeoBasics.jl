@@ -86,11 +86,42 @@ function GeoBorders{T}(latlon_polyareas::Vector{<:POLY_LATLON}, cart_polyareas::
     cart_bboxes = map(boundingbox, cart_polyareas)
     GeoBorders{T}(latlon_polyareas, latlon_bboxes, cart_polyareas, cart_bboxes)
 end
-function GeoBorders{T}(geometry) where T <: AbstractFloat
-    cart_polyareas = split_antimeridian(polyareas(Cartesian, geometry) |> collect) |> parent
-    latlon_polyareas = map(latlon_geometry, cart_polyareas)
+function GeoBorders{T}(geoms::Vector{<:Union{VALID_MULTI, VALID_POLY, VALID_BOX}}; fix_antimeridian_crossing::Optional{Bool} = NotProvided()) where T <: AbstractFloat
+    fix_antimeridian_crossing = @fallback fix_antimeridian_crossing true
+    cart_polyareas = mapreduce(vcat, geoms) do geom
+        cart_polyareas = collect(polyareas(Cartesian, geom))
+        cart_polyareas = if fix_antimeridian_crossing
+            split_antimeridian(cart_polyareas)
+        else
+            # If we don't fix the antimeridian, we ensure that the orientation is consistent
+            map(fix_orientation, cart_polyareas)
+        end
+    end
+    latlon_polyareas = map(latlon_geometry(T), cart_polyareas)
     GeoBorders{T}(latlon_polyareas, cart_polyareas)
 end
-GeoBorders{T}(gb::GeoBorders{T}) where T <: AbstractFloat = gb
-GeoBorders{T}(gb::GeoBorders) where T <: AbstractFloat = GeoBorders{T}(gb.latlon_polyareas, gb.cart_polyareas)
-GeoBorders(geometry) = GeoBorders{common_valuetype(AbstractFloat, Float32, geometry)}(geometry)
+function GeoBorders{T}(geoms::Vector{<:FastInGeometry}; fix_antimeridian_crossing::Optional{Bool} = NotProvided()) where T <: AbstractFloat
+    if fix_antimeridian_crossing isa Bool
+        @warn "The `fix_antimeridian_crossing` is ignored when working with geometries that subtype `FastInGeometry`."
+    end
+    cart_polyareas = POLY_CART{T}[]
+    latlon_polyareas = POLY_LATLON{T}[]
+    latlon_bboxes = BOX_LATLON{T}[]
+    cart_bboxes = BOX_CART{T}[]
+    for geom in geoms
+        latpolys = polyareas(LatLon, geom)
+        cartpolys = polyareas(Cartesian, geom)
+        latbboxes = bboxes(LatLon, geom)
+        cartbboxes = bboxes(Cartesian, geom)
+        for (latp, cartp, latb, cartb) in zip(latpolys, cartpolys, latbboxes, cartbboxes)
+            push!(latlon_polyareas, latlon_geometry(T, latp))
+            push!(cart_polyareas, cartesian_geometry(T, cartp))
+            push!(latlon_bboxes, latlon_geometry(T, latb))
+            push!(cart_bboxes, cartesian_geometry(T, cartb))
+        end
+    end
+    GeoBorders{T}(latlon_polyareas, latlon_bboxes, cart_polyareas, cart_bboxes)
+end
+GeoBorders{T}(geometry::Geometry; fix_antimeridian_crossing::Optional{Bool} = NotProvided()) where T <: AbstractFloat = GeoBorders{T}([geometry]; fix_antimeridian_crossing)
+GeoBorders{T}(dmn::Domain; fix_antimeridian_crossing::Optional{Bool} = NotProvided()) where T <: AbstractFloat = GeoBorders{T}(collect(dmn); fix_antimeridian_crossing)
+GeoBorders(obj::Union{Geometry, Domain}; fix_antimeridian_crossing::Optional{Bool} = NotProvided()) = GeoBorders{common_valuetype(AbstractFloat, Float32, obj)}(obj; fix_antimeridian_crossing)
