@@ -36,6 +36,9 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
+        with:
+          localregistry: |
+            https://github.com/JuliaSatcomFramework/JuliaRegistry.git
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
       - name: Upload coverage reports to Codecov
