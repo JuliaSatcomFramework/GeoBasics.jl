@@ -9,7 +9,7 @@ using GeoPlottingHelpers: GeoPlottingHelpers, with_settings, extract_latlon_coor
 using Unitful: Unitful, ustrip, @u_str
 
 include("types.jl")
-export FastInGeometry
+export FastInGeometry, GeoBorders
 
 include("interface.jl")
 export polyareas, bboxes, geoborders
@@ -17,5 +17,7 @@ export polyareas, bboxes, geoborders
 include("helpers.jl")
 
 include("antimeridian.jl")
+
+include("point_inclusion.jl")
 
 end # module GeoBasics

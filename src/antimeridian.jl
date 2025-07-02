@@ -61,8 +61,13 @@ function join_segments!(segs::Vector{Vector{POINT_CART{T}}}) where T <: Abstract
         candidate_Δlat = get_lat(cend) - get_lat(cstart)
         # For the candidate to be eligible for inclusion, it must have Δlat which has opposite sign than the target and lower absolute value
         sign(target_Δlat) == -sign(candidate_Δlat) || return 0
-        # Once the sign is opposite, we return 1 if candidate should be inlucded in target or -1 if target should be included in candidate
-        return abs(target_Δlat) > abs(candidate_Δlat) ? 1 : -1
+        start_Δlat = get_lat(tstart) - get_lat(cstart)
+        # We still have to check whether one segment is inside the bounds of the other
+        if abs(target_Δlat) > abs(candidate_Δlat)
+            abs(start_Δlat) < abs(target_Δlat) ? 1 : 0
+        else
+            abs(start_Δlat) < abs(candidate_Δlat) ? -1 : 0
+        end
     end
     while !isempty(segs)
         target = popfirst!(segs)
@@ -82,30 +87,42 @@ function join_segments!(segs::Vector{Vector{POINT_CART{T}}}) where T <: Abstract
     return processed
 end
 
-function split_antimeridian(poly::POLY_CART{T}) where T <: AbstractFloat
-    outer, inners... = rings(poly)
-    has_antimeridian(outer) || return Multi([poly]) # If there is no antimeridian crossing in the outer ring, we simply return a Multi only containing the original polyarea
-    # We start by splitting the outer rings of the polyarea
-    splitted_outer = split_antimeridian(outer, CCW)
-    # For each of the resulting outers
-    polyareas = map(r -> PolyArea(r), splitted_outer)
-    # We now iterate through all inner rings, checking if they need to split and finding out in which of the splitted polyareas the potentially splitted holes belong to
-    for inner in inners
-        splitted_inner = split_antimeridian(inner, CW)
-        # We now iterate through all the splitted outers, checking if the inner ring belongs to it
-        for r in splitted_inner
-            # We only check inclusion of the first point of the ring
-            p = vertex(r, 1)
-            placed = false
-            for this_poly in polyareas
-                if in(p, this_poly)
-                    push!(this_poly.rings, r)
-                    placed = true
-                    break
+function split_antimeridian(polyareas_vector::Vector{POLY_CART{T}}) where T <: AbstractFloat
+    mapreduce(vcat, polyareas_vector) do poly
+        outer, inners... = rings(poly)
+        has_antimeridian(outer) || return [poly] # If there is no antimeridian crossing in the outer ring, we simply return a Multi only containing the original polyarea
+        # We start by splitting the outer rings of the polyarea
+        splitted_outer = split_antimeridian(outer, CCW)
+        # For each of the resulting outers
+        polyareas = map(r -> PolyArea(r), splitted_outer)
+        # We now iterate through all inner rings, checking if they need to split and finding out in which of the splitted polyareas the potentially splitted holes belong to
+        for inner in inners
+            splitted_inner = split_antimeridian(inner, CW)
+            # We now iterate through all the splitted outers, checking if the inner ring belongs to it
+            for r in splitted_inner
+                # We only check inclusion of the first point of the ring
+                p = vertex(r, 1)
+                placed = false
+                for this_poly in polyareas
+                    if in(p, this_poly)
+                        push!(this_poly.rings, r)
+                        placed = true
+                        break
+                    end
                 end
+                placed || error("Something went wrong, one of the inner rings could not be placed into any of the splitted polyareas")
             end
-            placed || error("Something went wrong, one of the inner rings could not be placed into any of the splitted polyareas")
         end
-    end
-    return Multi(polyareas)
+        polyareas
+    end |> Multi
 end
+
+# function split_antimeridian(geometry)
+#     polyareas_cart = polyareas(Cartesian, geometry) |> collect
+#     multi_cart = split_antimeridian(polyareas_cart)
+#     if crs(geometry) <: Cartesian
+#         return multi_cart
+#     else
+#         latlon_geometry(multi_cart)
+#     end
+# end

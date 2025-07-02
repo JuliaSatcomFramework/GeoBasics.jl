@@ -78,3 +78,19 @@ struct GeoBorders{T} <: FastInGeometry{T}
         new{T}(latlon_polyareas, latlon_bboxes, cart_polyareas, cart_bboxes)
     end
 end
+function GeoBorders{T}(latlon_polyareas::Vector{<:POLY_LATLON}, cart_polyareas::Vector{<:POLY_CART}) where T <: AbstractFloat
+    length(latlon_polyareas) == length(cart_polyareas) || throw(ArgumentError("The number of latlon and cart polyareas must be the same"))
+    latlon_polyareas = map(latlon_geometry(T), latlon_polyareas)
+    cart_polyareas = map(cartesian_geometry(T), cart_polyareas)
+    latlon_bboxes = map(boundingbox, latlon_polyareas)
+    cart_bboxes = map(boundingbox, cart_polyareas)
+    GeoBorders{T}(latlon_polyareas, latlon_bboxes, cart_polyareas, cart_bboxes)
+end
+function GeoBorders{T}(geometry) where T <: AbstractFloat
+    cart_polyareas = split_antimeridian(polyareas(Cartesian, geometry) |> collect) |> parent
+    latlon_polyareas = map(latlon_geometry, cart_polyareas)
+    GeoBorders{T}(latlon_polyareas, cart_polyareas)
+end
+GeoBorders{T}(gb::GeoBorders{T}) where T <: AbstractFloat = gb
+GeoBorders{T}(gb::GeoBorders) where T <: AbstractFloat = GeoBorders{T}(gb.latlon_polyareas, gb.cart_polyareas)
+GeoBorders(geometry) = GeoBorders{common_valuetype(AbstractFloat, Float32, geometry)}(geometry)

@@ -38,6 +38,24 @@ When adding a method to this function to satisfy the `FastInGeometry` interface,
 polyareas(::Type{LatLon}, b::GeoBorders) = b.latlon_polyareas
 polyareas(::Type{Cartesian}, b::GeoBorders) = b.cart_polyareas
 
+"""
+    bboxes([crs, ]geom)
+
+Returns an iterable of the 2D `Box`s associated to the input geometry defined over the Earth's surface.
+
+It is possible to specify whether the returned `Box`s should contains `Point` in either `LatLon` or `Cartesian` coordinates by passing `LatLon` or `Cartesian` as first argument.
+
+If not provided, the crs defaults to `LatLon`.
+
+See also [`geoborders`](@ref), [`polyareas`](@ref), [`FastInGeometry`](@ref).
+
+# Extended Help
+When adding a method to this function to satisfy the `FastInGeometry` interface, it is currently only necessary to add a method with the following signature (as that is what is used in the fast point inclusion algorithm):
+    bboxes(::Type{Cartesian}, custom_geom)
+
+!!! note
+    To ensure optimal speed for the inclusion algorithm, it is recommended that this function returns a pre-computed iterable of `Box`s rather than computing it at runtime
+"""
 bboxes(::Type{LatLon}, b::GeoBorders) = b.latlon_bboxes
 bboxes(::Type{Cartesian}, b::GeoBorders) = b.cart_bboxes
 
@@ -75,5 +93,5 @@ function polyareas(T::VALID_CRS, p::VALID_POLY)
     Iterators.map(f, (p, ))
 end
 function polyareas(T::VALID_CRS, dmn::Domain)
-    Iterators.flatten(polyareas(T, el) for el in elements(dmn))
+    Iterators.flatten(polyareas(T, el) for el in dmn)
 end
