@@ -87,6 +87,16 @@ function join_segments!(segs::Vector{Vector{POINT_CART{T}}}) where T <: Abstract
     return processed
 end
 
+
+"""
+    split_antimeridian(polyareas_vector::Vector{POLY_CART{T}})
+
+Takes as input a vector of `Cartesian2D{WGS84Latest}` `PolyArea`s and process each of them to eventually split antimeridian crossings in each of the rings of the `PolyArea` (both for outer and inner rings, e.g. holes).
+
+It returns a vector of `PolyArea`s where all antimeridian crossings have been handled, potentially resulting in a higher number of elements compared to the input vector (if at least one of the provided `PolyArea`s has antimeridian crossings).
+
+See also [`GeoBorders`](@ref), [`GeoBorders`](@ref), [`polyareas`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref).
+"""
 function split_antimeridian(polyareas_vector::Vector{POLY_CART{T}}) where T <: AbstractFloat
     mapreduce(vcat, polyareas_vector) do poly
         outer, inners... = rings(poly)
@@ -114,7 +124,7 @@ function split_antimeridian(polyareas_vector::Vector{POLY_CART{T}}) where T <: A
             end
         end
         polyareas
-    end |> Multi
+    end
 end
 
 # function split_antimeridian(geometry)

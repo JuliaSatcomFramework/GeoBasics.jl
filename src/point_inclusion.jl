@@ -2,9 +2,11 @@
     in_exit_early(p, polys, bboxes)
 Function that checks if a point is contained one of the polyareas in vector `polys` which are associated to the bounding boxes in vector `bboxes`.
 
-Both `polys` and `bboxes` must be iterables of the same size, with element type `POLY_CART` and `BBOX_CART` respectively.
+Both `polys` and `bboxes` must be iterables of the same size, with element type `POLY_CART` and `BBOX_CART` respectively (both are type aliases of `Meshes.jl` types defined within `GeoBasics.jl`).
 
-This function is basically pre-filtering points by checking inclusion in the bounding box which is significantly faster than checking for the polyarea itself.
+This function is basically pre-filtering points by checking inclusion in the bounding box which is significantly faster than checking for the polyarea itself, especially if the polyareas is composed by a large number of points.
+
+See also [`polyareas`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref), [`geoborders`](@ref), [`GeoBorders`](@ref).
 """
 function in_exit_early(p, polys, bboxes)
     T = first(polys) |> valuetype
