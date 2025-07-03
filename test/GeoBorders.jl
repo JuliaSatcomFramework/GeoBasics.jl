@@ -1,7 +1,7 @@
-@testitem "GeoBorders" begin
+@testitem "GeoBorders antimeridian/orientation" begin
     using GeoBasics.Meshes
     using GeoBasics.CoordRefSystems
-    using GeoBasics.BasicTypes: valuetype
+    using GeoBasics.BasicTypes: BasicTypes, valuetype
     using GeoBasics.GeoPlottingHelpers: to_raw_lonlat
     using GeoBasics: to_cart_point, split_antimeridian
 
@@ -45,10 +45,10 @@
     
     # By default, when using normal geometries (that don't subtype `FastInGeometry`), the antimeridian split is performed
     with_split = GeoBorders(complex_s_poly)
-    @test length(polyareas(with_split)) == 4
+    @test length(polyareas(LatLon, with_split)) == 4
     # If we force to disregard the antimeridian split, we get a single polygon that is degenerate
     without_split = GeoBorders(complex_s_poly, fix_antimeridian_crossing = false)
-    @test length(polyareas(without_split)) == 1
+    @test length(polyareas(LatLon, without_split)) == 1
 
     # We test that the point in LatLon(0,0) is correctly excluded by the polygon with fix, while it is included in the one without fix as it's a degenerate polygon spanning most of the longitudes around 0 latitude
     @test in(LatLon(0,0), without_split)
@@ -71,4 +71,21 @@
     end
     reverse_split = GeoBorders{Float32}(reverse_poly)
     @test length(polyareas(LatLon, reverse_split)) == 4
+
+    function has_correct_orientation(poly::PolyArea)
+        outer, inners = Iterators.peel(rings(poly))
+        orientation(outer) == CCW && all(r -> orientation(r) == CW, inners)
+    end
+    has_correct_orientation(geom) = all(has_correct_orientation, polyareas(Cartesian, geom)) && all(has_correct_orientation, polyareas(LatLon, geom))
+
+    # We check that the orientation of the polygon is enforced. The original poly is not correctly oriented
+    @test !has_correct_orientation(complex_s_poly)
+    # The processed polygons, both with and without antimeridian fix must be
+    @test has_correct_orientation(with_split)
+    @test has_correct_orientation(without_split)
+end
+
+@testitem "FastInGeometry interface" begin
+    # We try implementing a type supporting the `FastInGeometry` interface in the simplest way possible
+    
 end
