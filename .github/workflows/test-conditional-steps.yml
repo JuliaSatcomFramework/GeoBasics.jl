@@ -1,0 +1,59 @@
+name: Test Conditional Steps
+
+on:
+  workflow_dispatch:
+    inputs:
+      should_run:
+        description: 'Should the second step run?'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  test-conditional:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      
+      - name: Check condition
+        id: check-condition
+        shell: julia {0}
+        run: |
+          using Dates
+          
+          # Get the input parameter (simulating the condition check)
+          should_run_input = get(ENV, "GITHUB_EVENT_INPUT_SHOULD_RUN", "true")
+          
+          println("Checking if second step should run...")
+          println("Input value: $should_run_input")
+          
+          if should_run_input == "true"
+              println("Condition is true - second step will run")
+              open(ENV["GITHUB_OUTPUT"], "a") do io
+                  println(io, "should_run=true")
+              end
+          else
+              println("Condition is false - second step will be skipped")
+              open(ENV["GITHUB_OUTPUT"], "a") do io
+                  println(io, "should_run=false")
+              end
+          end
+      
+      - name: Second step (conditional)
+        if: steps.check-condition.outputs.should_run == 'true'
+        shell: julia {0}
+        run: |
+          println("This step only runs when should_run is true")
+          println("Current time: $(now())")
+          println("Random number: $(rand(1:1000))")
+      
+      - name: Final step (always runs)
+        shell: julia {0}
+        run: |
+          println("This step always runs regardless of the condition")
+          println("Workflow completed successfully!") 
