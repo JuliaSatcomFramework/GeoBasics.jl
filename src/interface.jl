@@ -64,8 +64,6 @@ for nm in (:polyareas, :bboxes)
     end
 end
 
-bboxes(T::VALID_CRS, dmn::FastInDomain) = Iterators.flatten(bboxes(T, el) for el in dmn)
-
 """
     to_multi(crs, geom)
     to_multi(crs)
