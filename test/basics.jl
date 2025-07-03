@@ -8,6 +8,7 @@
     using GeoBasics.Meshes: 𝔼, Point, Box, PolyArea, Multi
     using GeoBasics.CoordRefSystems: LatLon, Cartesian, WGS84Latest
     using GeoBasics.Unitful: Unitful, °, @u_str
+    using TestAllocations
 end
 
 @testitem "Cartesian LatLon conversion" setup=[setup_basic] begin
@@ -65,4 +66,15 @@ end
 
     @test LL(20, 10) |> to_latlon_point(Float32) === Point(LatLon(20f0, 10f0))
     @test LL(20, 10) |> to_cart_point(Float32) === Point(Cartesian2D{WGS84Latest}(10f0, 20f0))
+end
+
+@testitem "to_multi" setup=[setup_basic] begin
+    multi = rand(PolyArea, 10; crs = LatLon) |> Multi
+
+    gb = GeoBorders(multi)
+
+    gb |> to_multi(LatLon) == multi
+
+    @test @nallocs(to_multi($LatLon, gb)) == 0
+    @test @nallocs(to_multi($Cartesian, gb)) == 0
 end
