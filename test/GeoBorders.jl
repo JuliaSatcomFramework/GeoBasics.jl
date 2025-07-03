@@ -1,6 +1,6 @@
 @testsnippet setup_geoborders begin
     using GeoBasics
-    using GeoBasics: POLY_LATLON, POLY_CART, BOX_LATLON, BOX_CART
+    using GeoBasics: VALID_CRS, VALID_MULTI, VALID_POLY, VALID_BOX, POLY_LATLON, POLY_CART, BOX_LATLON, BOX_CART
     using GeoBasics.Meshes
     using GeoBasics.CoordRefSystems
     using GeoBasics.BasicTypes: BasicTypes, valuetype
@@ -120,4 +120,53 @@ end
         @test @nallocs(bboxes(LatLon, sg)) == 0
         @test @nallocs(bboxes(Cartesian, sg)) == 0
     end
+
+    p_sg = last(polyareas(Cartesian, sg)) |> centroid
+    @test in(p_sg, sg)
+
+    # We test a more complicated geometry which does not have GeoBorders as direct field and only implements `polyareas` and `bboxes`
+    struct WeirdGeometry{NT} <: FastInGeometry{Float32}
+        name::String
+        nt::NT
+    end
+
+    function WeirdGeometry(geoms; name = "WeirdGeometry")
+        nt = (;borders = GeoBorders{Float32}(geoms))
+        return WeirdGeometry{typeof(nt)}(name, nt)
+    end
+
+    GeoBasics.polyareas(T::VALID_CRS, wg::WeirdGeometry) = polyareas(T, wg.nt.borders)
+    GeoBasics.bboxes(T::VALID_CRS, wg::WeirdGeometry) = bboxes(T, wg.nt.borders)
+
+    f = to_latlon_point(Float64)
+
+    mixed_vector = []
+    push!(mixed_vector, rand(PolyArea; crs = LatLon)) # A poly
+    push!(mixed_vector, rand(PolyArea, 2; crs = Cartesian2D{WGS84Latest}) |> Multi) # A multi
+    push!(mixed_vector, Box(f((0,0)), f((10,10)))) # A box
+    wg = WeirdGeometry(mixed_vector)
+
+    @test wg |> polyareas(LatLon) isa Vector{<:POLY_LATLON}
+    @test wg |> polyareas(Cartesian) isa Vector{<:POLY_CART}
+    @test wg |> bboxes(LatLon) isa Vector{<:BOX_LATLON}
+    @test wg |> bboxes(Cartesian) isa Vector{<:BOX_CART}
+
+    @testset "Allocations" begin
+        wg = WeirdGeometry(mixed_vector)
+        @test @nallocs(polyareas(LatLon, wg)) == 0
+        @test @nallocs(polyareas(Cartesian, wg)) == 0
+        @test @nallocs(bboxes(LatLon, wg)) == 0
+        @test @nallocs(bboxes(Cartesian, wg)) == 0
+    end
+
+    p_wg = last(polyareas(Cartesian, wg)) |> centroid
+    @test in(p_wg, wg)
+    
+    # We try to create a domain, but since GeometrySet expects same type geometries we create a SimpleGeometry from the WeirdGeometry. This is valid as the GeoBorders constructor works with polyareas for FastInGeometry types
+    sg_wg = SimpleGeometry(wg)
+
+    dmn = GeometrySet([sg, sg_wg])
+    @test length(dmn) == 2
+    @test in(p_sg, dmn)
+    @test in(p_wg, dmn)
 end

@@ -170,7 +170,7 @@ function polyareas(T::VALID_CRS, b::VALID_BOX; nowarn = false)
     Δlon = hi_lon - lo_lon
     # We make a range because with a Box we might have a valid segment longer than 180° of longitude, which would otherwise be split into multiple polyareas
     lon_range = range(lo_lon, hi_lon; length = floor(Int, Δlon / 180) + 2)
-    f = T === LatLon ? to_latlon_point : to_cartesian_point
+    f = T === LatLon ? to_latlon_point : to_cart_point
     p = Ring(vcat(
         map(lon -> f(LatLon(lo_lat, lon)), lon_range),
         map(lon -> f(LatLon(hi_lat, lon)), reverse(lon_range)),
