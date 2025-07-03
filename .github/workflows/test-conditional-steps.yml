@@ -24,10 +24,8 @@ jobs:
         id: check-condition
         shell: julia {0}
         run: |
-          using Dates
-          
-          # Get the input parameter (simulating the condition check)
-          should_run_input = get(ENV, "GITHUB_EVENT_INPUT_SHOULD_RUN", "true")
+          # Get the input parameter from GitHub Actions context
+          should_run_input = "${{ github.event.inputs.should_run }}"
           
           println("Checking if second step should run...")
           println("Input value: $should_run_input")
