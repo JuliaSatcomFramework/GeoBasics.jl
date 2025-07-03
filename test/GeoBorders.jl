@@ -1,10 +1,12 @@
 @testsnippet setup_geoborders begin
     using GeoBasics
+    using GeoBasics: POLY_LATLON, POLY_CART, BOX_LATLON, BOX_CART
     using GeoBasics.Meshes
     using GeoBasics.CoordRefSystems
     using GeoBasics.BasicTypes: BasicTypes, valuetype
     using GeoBasics.GeoPlottingHelpers: to_raw_lonlat
     using GeoBasics: to_cart_point, split_antimeridian
+    using TestAllocations
 end
 
 @testitem "GeoBorders antimeridian/orientation" setup=[setup_geoborders] begin
@@ -105,4 +107,17 @@ end
     sg = SimpleGeometry(ps)
 
     @test geoborders(sg) isa GeoBorders{Float64}
+    @test polyareas(LatLon, sg) isa Vector{<:POLY_LATLON}
+    @test polyareas(Cartesian, sg) isa Vector{<:POLY_CART}
+    @test bboxes(LatLon, sg) isa Vector{<:BOX_LATLON}
+    @test bboxes(Cartesian, sg) isa Vector{<:BOX_CART}
+
+    @testset "Allocations" begin
+        sg = SimpleGeometry(ps)
+        @test @nallocs(geoborders(sg)) == 0
+        @test @nallocs(polyareas(LatLon, sg)) == 0
+        @test @nallocs(polyareas(Cartesian, sg)) == 0
+        @test @nallocs(bboxes(LatLon, sg)) == 0
+        @test @nallocs(bboxes(Cartesian, sg)) == 0
+    end
 end
