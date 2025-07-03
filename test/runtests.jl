@@ -6,3 +6,5 @@ using TestItemRunner
     Aqua.test_all(GeoBasics; ambiguities = false)
     Aqua.test_ambiguities(GeoBasics)
 end
+
+@run_package_tests verbose = true

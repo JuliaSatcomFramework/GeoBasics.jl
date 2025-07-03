@@ -1,10 +1,13 @@
-@testitem "GeoBorders antimeridian/orientation" begin
+@testsnippet setup_geoborders begin
+    using GeoBasics
     using GeoBasics.Meshes
     using GeoBasics.CoordRefSystems
     using GeoBasics.BasicTypes: BasicTypes, valuetype
     using GeoBasics.GeoPlottingHelpers: to_raw_lonlat
     using GeoBasics: to_cart_point, split_antimeridian
+end
 
+@testitem "GeoBorders antimeridian/orientation" setup=[setup_geoborders] begin
     # We create a complex polygon that has a reversed S shape crossing the antimeridian in multiple places
     complex_s_poly = let
         f = Base.Fix1(to_cart_point, Float64)
@@ -85,7 +88,21 @@
     @test has_correct_orientation(without_split)
 end
 
-@testitem "FastInGeometry interface" begin
-    # We try implementing a type supporting the `FastInGeometry` interface in the simplest way possible
-    
+@testitem "FastInGeometry interface" setup=[setup_geoborders] begin
+    # We try implementing a type supporting the `FastInGeometry` interface in the simplest way possible, by having a field of type `GeoBorders`
+
+    struct SimpleGeometry{Float64} <: FastInGeometry{Float64}
+        name::String
+        borders::GeoBorders{Float64}
+    end
+
+    function SimpleGeometry(geoms; name = "SimpleGeometry")
+        borders = GeoBorders{Float64}(geoms)
+        return SimpleGeometry{Float64}(name, borders)
+    end
+
+    ps = rand(PolyArea, 10; crs = LatLon)
+    sg = SimpleGeometry(ps)
+
+    @test geoborders(sg) isa GeoBorders{Float64}
 end
