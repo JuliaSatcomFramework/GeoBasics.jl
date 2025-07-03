@@ -48,6 +48,7 @@ jobs:
         if: steps.check-condition.outputs.should_run == 'true'
         shell: julia {0}
         run: |
+          using Dates
           println("This step only runs when should_run is true")
           println("Current time: $(now())")
           println("Random number: $(rand(1:1000))")
