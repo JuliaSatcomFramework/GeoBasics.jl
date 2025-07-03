@@ -8,15 +8,22 @@ using CircularArrays: CircularArrays, CircularArray
 using GeoPlottingHelpers: GeoPlottingHelpers, with_settings, extract_latlon_coords, extract_latlon_coords!, geo_plotly_trace, to_raw_lonlat, geom_iterable, crossing_latitude_flat
 using Unitful: Unitful, ustrip, @u_str
 
+# Exports from dependencies
+export LatLon, Cartesian # From CoordRefSystems.jl
+export @u_str # From Unitful.jl
+
 include("types.jl")
 export FastInGeometry, GeoBorders
 
+include("geoborders.jl")
+
 include("interface.jl")
-export polyareas, bboxes, geoborders
+export polyareas, bboxes, geoborders, to_multi
 
 include("deps_interface.jl")
 
 include("helpers.jl")
+export to_cart_point, to_latlon_point
 
 include("antimeridian.jl")
 

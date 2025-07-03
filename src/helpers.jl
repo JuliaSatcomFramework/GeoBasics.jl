@@ -2,11 +2,75 @@
 get_lon(p) = first(to_raw_lonlat(p))
 get_lat(p) = last(to_raw_lonlat(p))
 
+"""
+    to_cart_point(T::Type{<:AbstractFloat}, obj)
+    to_cart_point(T::Type{<:AbstractFloat})
+    to_cart_point(obj)
+
+Extracts the lat/lon coordinates associated to input `obj` and return them as a `Point` from Meshes with `Cartesian2D{WGS84Latest}` as `CRS` and optionally forcing the underlying machine precision of the coordinates to `T`.
+
+The second method simply returns `Base.Fix1(to_cart_point, T)`.
+
+The third method, will try to extract the machine precision from `obj` by calling `BasicTypes.valuetype(obj)`.
+
+!!! note
+    This function exploits `GeoPlottingHelpers.to_row_lonlat` internally so any object that has a valid method for `to_row_lonlat` will work as input.
+
+## Examples
+
+```jldoctest
+julia> using GeoBasics
+
+julia> to_cart_point(Float32, (10, 20)) # Force precision to `Float32`
+Point with Cartesian{WGS84Latest} coordinates
+├─ x: 10.0f0 m
+└─ y: 20.0f0 m
+
+julia> to_cart_point(LatLon(20,10)) # Extract precision from `LatLon` input
+Point with Cartesian{WGS84Latest} coordinates
+├─ x: 10.0 m
+└─ y: 20.0 m
+```
+
+See also [`to_latlon_point`](@ref).
+"""
 function to_cart_point(T::Type{<:AbstractFloat}, p)
     lon, lat = to_raw_lonlat(p) .|> T
     return Cartesian{WGS84Latest}(lon, lat) |> Point
 end
 
+"""
+    to_latlon_point(T::Type{<:AbstractFloat}, obj)
+    to_latlon_point(T::Type{<:AbstractFloat})
+    to_latlon_point(obj)
+
+Extracts the lat/lon coordinates associated to input `obj` and return them as a `Point` from Meshes with `LatLon{WGS84Latest}` as `CRS` and optionally forcing the underlying machine precision of the coordinates to `T`.
+
+The second method simply returns `Base.Fix1(to_latlon_point, T)`.
+
+The third method, will try to extract the machine precision from `obj` by calling `BasicTypes.valuetype(obj)`.
+
+!!! note
+    This function exploits `GeoPlottingHelpers.to_row_lonlat` internally so any object that has a valid method for `to_row_lonlat` will work as input.
+
+## Examples
+
+```jldoctest
+julia> using GeoBasics
+
+julia> to_latlon_point(Float32, (10, 20)) # Force precision to `Float32`
+Point with GeodeticLatLon{WGS84Latest} coordinates
+├─ lat: 20.0f0°
+└─ lon: 10.0f0°
+
+julia> to_latlon_point(LatLon(20,10)) # Extract precision from `LatLon` input
+Point with GeodeticLatLon{WGS84Latest} coordinates
+├─ lat: 10.0°
+└─ lon: 20.0°
+```
+
+See also [`to_cart_point`](@ref).
+"""
 function to_latlon_point(T::Type{<:AbstractFloat}, p)
     lon, lat = to_raw_lonlat(p) .|> T
     return LatLon{WGS84Latest}(lat, lon) |> Point
@@ -88,3 +152,33 @@ function latlon_geometry(T::Type{<:AbstractFloat}, multi::Union{MULTI_LATLON, MU
 end
 latlon_geometry(T::Type{<:AbstractFloat}) = Base.Fix1(latlon_geometry, T)
 latlon_geometry(x) = latlon_geometry(valuetype(x), x)
+
+#= 
+Methods for polyareas for types from Meshes. This are mostly used for the construction of GeoBorders objects
+=#
+warn_internal_polyareas() = @warn "The `polyareas` function for `Multi`, `PolyArea` and `Box` objects is considered internal. You can suppress this warning by calling the function with the `nowarn` keyword argument set to true." maxlog = 1
+function polyareas(T::VALID_CRS, m::VALID_MULTI; nowarn = false)
+    nowarn || warn_internal_polyareas()
+    f = T === LatLon ? latlon_geometry : cartesian_geometry
+    Iterators.map(f, parent(m))
+end
+function polyareas(T::VALID_CRS, b::VALID_BOX; nowarn = false)
+    nowarn || warn_internal_polyareas()
+	lo, hi = extrema(b) .|> to_raw_lonlat
+    lo_lon, lo_lat = lo
+    hi_lon, hi_lat = hi
+    Δlon = hi_lon - lo_lon
+    # We make a range because with a Box we might have a valid segment longer than 180° of longitude, which would otherwise be split into multiple polyareas
+    lon_range = range(lo_lon, hi_lon; length = floor(Int, Δlon / 180) + 2)
+    f = T === LatLon ? to_latlon_point : to_cartesian_point
+    p = Ring(vcat(
+        map(lon -> f(LatLon(lo_lat, lon)), lon_range),
+        map(lon -> f(LatLon(hi_lat, lon)), reverse(lon_range)),
+    )) |> PolyArea
+    return (p, )
+end
+function polyareas(T::VALID_CRS, p::VALID_POLY; nowarn = false)
+    nowarn || warn_internal_polyareas()
+    f = T === LatLon ? latlon_geometry : cartesian_geometry
+    Iterators.map(f, (p, ))
+end

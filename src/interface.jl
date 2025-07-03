@@ -1,68 +1,62 @@
-"""
-    geoborders(geom)
-
-Extract the Geo borders of the region/geometry provided as input. 
-
-**This function expects the output to be an instance of the `GeoBorders` type.**
-
-By default, this function will try to extract the first field in the given type whose type is `GeoBorders`, so custom types do not need to add a method for this function explicitly if they do have a field that satisfies `field isa GeoBorders`.
-
-Having a valid method of this function for custom geometries is sufficient to satisfy the `FastInGeometry` interface, as `polyareas` and `bboxes` have a default fallback which exploit this method.
-
-See also [`polyareas`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref).
-"""
-function geoborders(geom; exception = NotProvided())  
-    exception = @fallback exception ArgumentError("No field of type `GeoBorders` was found in the provided input.\nYou need to define a custom method for the `geoborders` function.")
-    getproperty_oftype(geom, GeoBorders; exception)::GeoBorders
-end
+function geoborders end # Defined in geoborders.jl
 
 # Basic functions for GeoBorders
 """
-    polyareas([crs, ]geom)
+    polyareas(crs, geom)
+    polyareas(crs)
 
 Returns an iterable of the 2D `PolyArea`s associated to the input geometry defined over the Earth's surface.
 
-It is possible to specify whether the returned `PolyArea`s should contains `Point` in either `LatLon` or `Cartesian` coordinates by passing `LatLon` or `Cartesian` as first argument.
+# Arguments
+- `crs::Union{Type{LatLon}, Type{Cartesian}}`: Specifies whether the returned vector of `PolyArea` elements should have `LatLon{WGS84LatLon}` or `Cartesian2D{WGS84Latest}` as underlying CRS.
+- `geom`: The input geometry. 
 
-If not provided, the crs defaults to `Cartesian`.
+When only the `crs` argument is provided, the function simply returns `Base.Fix1(polyareas, crs)`.
 
-See also [`geoborders`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref).
+See also [`geoborders`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref), [`to_multi`](@ref).
 
 # Extended Help
-When adding a method to this function to satisfy the `FastInGeometry` interface, it is currently only necessary to add a method with the following signature (as that is what is used in the fast point inclusion algorithm):
+
+When implementing the `FastInGeometry` interface for types where `geoborders` does not return a valid `GeoBorders` object (or for which a custom implementation of `polyareas` is preferred), one should implement the following two methods:
     polyareas(::Type{Cartesian}, custom_geom)
+    polyareas(::Type{LatLon}, custom_geom)
+
 
 !!! note
-    To ensure optimal speed for the inclusion algorithm, it is recommended that this function returns a pre-computed iterable of `PolyArea`s rather than computing it at runtime
+    To ensure optimal speed for the inclusion algorithm, it is recommended that this function returns a pre-computed iterable of `PolyArea`s rather than computing it at runtime, at least for the method with `Cartesian` as crs as that is used by the fast point inclusion algorithm.
 """
 polyareas(::Type{LatLon}, b::GeoBorders) = b.latlon_polyareas
 polyareas(::Type{Cartesian}, b::GeoBorders) = b.cart_polyareas
 
 """
-    bboxes([crs, ]geom)
+    bboxes(crs, geom)
+    bboxes(crs)
 
 Returns an iterable of the 2D `Box`s associated to the input geometry defined over the Earth's surface.
 
-It is possible to specify whether the returned `Box`s should contains `Point` in either `LatLon` or `Cartesian` coordinates by passing `LatLon` or `Cartesian` as first argument.
+# Arguments
+- `crs::Union{Type{LatLon}, Type{Cartesian}}`: Specifies whether the returned vector of `Box` elements should have `LatLon{WGS84LatLon}` or `Cartesian2D{WGS84Latest}` as underlying CRS.
+- `geom`: The input geometry.
 
-If not provided, the crs defaults to `Cartesian`.
+When only the `crs` argument is provided, the function simply returns `Base.Fix1(bboxes, crs)`.
 
 See also [`geoborders`](@ref), [`polyareas`](@ref), [`FastInGeometry`](@ref).
 
 # Extended Help
-When adding a method to this function to satisfy the `FastInGeometry` interface, it is currently only necessary to add a method with the following signature (as that is what is used in the fast point inclusion algorithm):
+When implementing the `FastInGeometry` interface for types where `geoborders` does not return a valid `GeoBorders` object (or for which a custom implementation of `bboxes` is preferred), one should implement the following two methods:
     bboxes(::Type{Cartesian}, custom_geom)
+    bboxes(::Type{LatLon}, custom_geom)
 
 !!! note
-    To ensure optimal speed for the inclusion algorithm, it is recommended that this function returns a pre-computed iterable of `Box`s rather than computing it at runtime
+    To ensure optimal speed for the inclusion algorithm, it is recommended that this function returns a pre-computed iterable of `Box`s rather than computing it at runtime, at least for the method with `Cartesian` as crs as that is used by the fast point inclusion algorithm.
 """
 bboxes(::Type{LatLon}, b::GeoBorders) = b.latlon_bboxes
 bboxes(::Type{Cartesian}, b::GeoBorders) = b.cart_bboxes
 
 # Fallbacks
 for nm in (:polyareas, :bboxes)
-    # Version without CRS which defaults to LatLon
-    @eval $nm(x) = $nm(Cartesian, x)
+    # Function with CRS as only argument
+    @eval $nm(T::VALID_CRS) = Base.Fix1($nm, T)
     # Version which tries to extract the `GeoBorders` field from the input
     @eval function $nm(T::VALID_CRS, x) 
         exception = ArgumentError($(string("The `GeoBorders` connected to the input could not be automatically extracted.\nConsider adding a custom method for `geoborders` or more explicitly for the called `", nm, "` function.")))
@@ -72,28 +66,22 @@ end
 
 bboxes(T::VALID_CRS, dmn::FastInDomain) = Iterators.flatten(bboxes(T, el) for el in dmn)
 
-# Methods for polyareas for types from Meshes. This are mostly used for the construction of GeoBorders objects
-function polyareas(T::VALID_CRS, m::VALID_MULTI)
-    f = T === LatLon ? latlon_geometry : cartesian_geometry
-    Iterators.map(f, parent(m))
-end
-function polyareas(T::VALID_CRS, b::VALID_BOX)
-	lo, hi = extrema(b) .|> to_raw_lonlat
-    lo_lon, lo_lat = lo
-    hi_lon, hi_lat = hi
-    f = T === LatLon ? latlon_geometry : cartesian_geometry
-    p = Ring([
-        f(LatLon(hi_lat, lo_lon)),
-        f(LatLon(hi_lat, hi_lon)),
-        f(LatLon(lo_lat, hi_lon)),
-        f(LatLon(lo_lat, lo_lon)),
-    ]) |> PolyArea
-    return (p, )
-end
-function polyareas(T::VALID_CRS, p::VALID_POLY)
-    f = T === LatLon ? latlon_geometry : cartesian_geometry
-    Iterators.map(f, (p, ))
-end
-function polyareas(T::VALID_CRS, dmn::Domain)
-    Iterators.flatten(polyareas(T, el) for el in dmn)
-end
+"""
+    to_multi(crs, geom)
+    to_multi(crs)
+
+Returns a `Multi` object containing the `PolyArea`s associated to the input geometry and returned by calling `polyareas(crs, geom)`.
+
+When called with just the crs type as argument, it simply returns `Base.Fix1(to_multi, crs)`.
+
+This is intended to simplify the generation of a plain `Multi` object for further processing using standard functions from `Meshes.jl`.
+
+GeoBasics explicitly avoids extending methods from `Meshes.jl` on `FastInGeometry` objects to encourage users to explicitly decide whether to use the `LatLon` or `Cartesian` CRS instead of *magically* taking a decision on their behalf.
+
+!!! note
+    The computational cost of this function for types which have a valid method for [`geoborders`](@ref) is almost free (~1-2 nanoseconds).
+
+See also [`geoborders`](@ref), [`polyareas`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref). 
+"""
+to_multi(T::VALID_CRS, geom) = Multi(polyareas(T, geom))
+to_multi(T::VALID_CRS) = Base.Fix1(to_multi, T)

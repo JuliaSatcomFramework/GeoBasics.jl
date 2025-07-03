@@ -20,6 +20,7 @@ jobs:
         with:
           version: '1'
       - name: Check for stale PR previews
+        id: check-stale
         shell: julia {0}
         run: |
           using Pkg
@@ -60,15 +61,18 @@ jobs:
 
           if isempty(stale_previews)
               @info "No stale previews"
-              exit(1)
+              open(ENV["GITHUB_OUTPUT"], "a") do io
+                  println(io, "has_stale=false")
+              end
           end
-
+          
           for pr in stale_previews
               path = joinpath("previews", "PR$pr")
               @info "Removing $path"
               run(`git rm -rf $path`)
           end
       - name: Push changes
+        if: steps.check-stale.outputs.has_stale != 'false'
         run: |
           git config user.name "Documenter.jl"
           git config user.email "documenter@juliadocs.github.io"
