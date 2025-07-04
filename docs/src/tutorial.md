@@ -88,7 +88,92 @@ complex_s_poly = let
 end
 
 plt = with_settings(:OVERSAMPLE_LINES => :SHORT) do # This makes sure that the plot uses the shortest line between points
-    geo_plotly_trace(complex_s_poly; mode = "lines") |> Plot
+    data = geo_plotly_trace(complex_s_poly)
+    Plot(data, Layout(;
+      geo = attr(; 
+        center_lon = 180,
+        lonaxis_range = [0, 360]
+      )
+    ))
 end
 to_documenter(plt) # hide
 ```
+
+In reality, the polygon looks fine because we forced the plot to use shortest line between points for plotting (thus crossing the antimeridian). The actual polygon defined with those coordinates represents instead the following degenerate region:
+```@example antimeridian
+plt = with_settings(:OVERSAMPLE_LINES => :NORMAL) do # Actually draw lines from endpoints without using shorted line
+    data = geo_plotly_trace(complex_s_poly)
+    Plot(data)
+end
+to_documenter(plt) # hide
+```
+
+which can also be verified by checking point inclusion of one point that shouldn't be inside but is, and of one that should be in but isn't:
+```@example antimeridian
+# We use cartesian point as point inclusion in LatLon is not always defined in Meshes
+should_not = to_cart_point(LatLon(25, 0)) # This is in africa and shouldn't be in the intended polygon
+should_be = to_cart_point(LatLon(25, 180)) # This is in the ocean inside the polygon and outside it's holes
+
+map(in(complex_s_poly), (;should_be, should_not))
+```
+
+By feeding this polygon into the constructor of [`GeoBorders`](@ref), the antimeridian crossin is handled by splitting the input polygon into 4 subpolygons whenever a crossing of the antimeridian is encountered:
+
+```@example antimeridian
+gb = GeoBorders(complex_s_poly)
+plt = with_settings(:OVERSAMPLE_LINES => :NORMAL) do # Actually draw lines from endpoints without using shorted line, showing that GeoBorders handle this correctly
+    data = geo_plotly_trace(gb)
+    Plot(data, Layout(;
+      geo = attr(; 
+        center_lon = 180,
+        lonaxis_range = [0, 360]
+      )
+    ))
+end
+to_documenter(plt) # hide
+```
+
+And checking again for point inclusion we find the expected behavior (including a point in the hole not being considered inside).
+```@example antimeridian
+inside_hole = LatLon(25, 165) # Notice that this does not need to be a Point
+
+map(in(gb), (; should_be, should_not, inside_hole))
+```
+
+As seen from the last example, there is one additional advantage to satisfying the `FastInGeometry` interface. Inclusion in a `FastInRegion` does not need to use points which are of `Point` type with the exact same `CRS` as the geometry (as in plain Meshes) but can be:
+- a `Point` with either `LatLon{WGS84Latest}` or `Cartesian2D{WGS84Latest}` CRS,
+- a plain `LatLon{WGS84Latest}` coordinate.
+
+### Override antimeridian fix
+The procedure in the [`GeoBorders`](@ref) constructor that fixes the antimeridian crossing decides if there is one by simply checking if any segment of a polygon spans more than 180° degrees of longitude.
+
+In some cases, this has the unintended consequence of modifying the intended polygon. Consider for example a rectangular polygon going from -100 to +100 longitude and from -20 to + 20 latitude. Creating a `GeoBorders` with this input polygon will uncorrectly split it:
+
+```@example antimeridian
+large_rectangle = let
+  f = to_latlon_point(Float64)
+  PolyArea(map(f, [
+    LatLon(-20, -100),
+    LatLon(-20, 100),
+    LatLon(20, 100),
+    LatLon(20, -100),
+  ]))
+end
+
+plt = with_settings(:OVERSAMPLE_LINES => :NORMAL) do # Actually draw lines from endpoints without using shorted line
+    data = geo_plotly_trace(GeoBorders(large_rectangle))
+    Plot(data)
+end
+to_documenter(plt) # hide
+```
+
+In these cases, it is possible to override this behavior by using the `fix_antimeridian_crossing` keyword argument:
+```@example antimeridian
+plt = with_settings(:OVERSAMPLE_LINES => :NORMAL) do # Actually draw lines from endpoints without using shorted line
+    data = geo_plotly_trace(GeoBorders(large_rectangle; fix_antimeridian_crossing = false))
+    Plot(data)
+end
+to_documenter(plt) # hide
+```
+!!! note
+    The `fix_antimeridian_crossing` keyword argument is only respected for input geometries which are not already implementing the `FastInGeometry` interface. As mentioned in the [`polyareas`](@ref) docstrings, the polygons of `FastInGeometry` are already assumed to be correct
