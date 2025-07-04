@@ -174,3 +174,16 @@ end
 
     @test polyareas(LatLon, dgb) == mapreduce(polyareas(LatLon), vcat, dmn)
 end
+
+@testitem "remove duplicate polyareas" setup=[setup_geoborders] begin
+    f = to_latlon_point(Float64)
+
+    simple_box = Box(f((0,0)), f((10,10)))
+    other_box = Box(f((0,0)), f((10,20)))
+
+    geoms = [simple_box, other_box, simple_box]
+
+    gb = GeoBorders{Float64}(geoms)
+
+    @test length(polyareas(LatLon, gb)) == 2
+end
