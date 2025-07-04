@@ -1,4 +1,15 @@
-.vscode/*
+.vscode
 Manifest.toml
-test*.jl
+
+# Ignore julia files startig with test at the root
+/test*.jl
+
+# Coverage
 coverage/
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+
+# Ignore all build/ and builds/ directories
+build/
+builds/
