@@ -7,6 +7,9 @@ function geoborders end # Defined in geoborders.jl
 
 Returns an iterable of the 2D `PolyArea`s associated to the input geometry defined over the Earth's surface.
 
+!!! note
+    The `PolyArea` objects returned by this function are expected to represent polygons which never cross the antimeridian line (if a polygon is expected to cross the antimeridian line, it should be split into separate polygons divided at the antimeridian line). See the documentation of the package for more details.
+
 # Arguments
 - `crs::Union{Type{LatLon}, Type{Cartesian}}`: Specifies whether the returned vector of `PolyArea` elements should have `LatLon{WGS84LatLon}` or `Cartesian2D{WGS84Latest}` as underlying CRS.
 - `geom`: The input geometry. 
@@ -32,7 +35,10 @@ polyareas(::Type{Cartesian}, b::GeoBorders) = b.cart_polyareas
     bboxes(crs, geom)
     bboxes(crs)
 
-Returns an iterable of the 2D `Box`s associated to the input geometry defined over the Earth's surface.
+Returns an iterable of the 2D `Box`s associated to the input geometry defined over the Earth's surface. 
+
+!!! note
+    Each of the `Box` in the returned iterable is expected to be tied 1 to 1 to the `PolyArea`s returned by [`polyareas`](@ref) for the same input geometry and represents the `PolyArea`'s bounding box (as returned by `Meshes.boundingbox(poly)`).
 
 # Arguments
 - `crs::Union{Type{LatLon}, Type{Cartesian}}`: Specifies whether the returned vector of `Box` elements should have `LatLon{WGS84LatLon}` or `Cartesian2D{WGS84Latest}` as underlying CRS.

@@ -16,7 +16,8 @@ makedocs(;
     warnonly = true,
     pages=[
         "Home" => "index.md",
-        "Public API" => "public.md",
+        "Tutorial" => "tutorial.md",
+        "Public API" => "public.md"
     ],
 )
 

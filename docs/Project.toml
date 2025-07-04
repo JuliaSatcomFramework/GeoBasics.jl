@@ -1,3 +1,8 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 GeoBasics = "8fb48e0b-3c9c-4361-9123-9e8e6ea58083"
+PlotlyBase = "a03496cd-edff-5a9b-9e67-9cda94a718b5"
+PlotlyDocumenter = "9b90f1cd-2639-4507-8b17-2fbe371ceceb"
+
+[sources]
+GeoBasics = { path = ".." }

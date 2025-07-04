@@ -28,6 +28,9 @@ The `fix_antimeridian_crossing` keyword argument is only respected for plain Mes
 
 When the input is a single `Geometry` or `Domain`, the type parameter `T` can be omitted from the constructor and will be inferred using `valuetype(input)`. **When using a vector of geometries as input to the function, the machine precision `T` must be provided explicitly.**
 
+!!! note
+    The `GeoBorders` constructor will remove duplicate polyareas if any are present in the input polyareas after processing.
+
 See also [`FastInGeometry`](@ref), [`polyareas`](@ref), [`bboxes`](@ref), [`geoborders`](@ref).
 """
 struct GeoBorders{T} <: FastInGeometry{T}
