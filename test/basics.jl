@@ -97,3 +97,12 @@ end
 
     repr(gb)
 end
+
+
+@testitem "deps_interface" setup=[setup_geoborders] begin
+    # We test that the `deps` interface is working correctly
+
+    gb = GeoBorders(rand(PolyArea, 10; crs = LatLon))
+
+    @test GeoPlottingHelpers.geom_iterable(gb) == polyareas(LatLon, gb)
+end
