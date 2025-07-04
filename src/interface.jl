@@ -18,8 +18,8 @@ See also [`geoborders`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref), [`to_
 # Extended Help
 
 When implementing the `FastInGeometry` interface for types where `geoborders` does not return a valid `GeoBorders` object (or for which a custom implementation of `polyareas` is preferred), one should implement the following two methods:
-    polyareas(::Type{Cartesian}, custom_geom)
-    polyareas(::Type{LatLon}, custom_geom)
+- `polyareas(::Type{Cartesian}, custom_geom)`
+- `polyareas(::Type{LatLon}, custom_geom)`
 
 
 !!! note
@@ -44,8 +44,8 @@ See also [`geoborders`](@ref), [`polyareas`](@ref), [`FastInGeometry`](@ref).
 
 # Extended Help
 When implementing the `FastInGeometry` interface for types where `geoborders` does not return a valid `GeoBorders` object (or for which a custom implementation of `bboxes` is preferred), one should implement the following two methods:
-    bboxes(::Type{Cartesian}, custom_geom)
-    bboxes(::Type{LatLon}, custom_geom)
+- `bboxes(::Type{Cartesian}, custom_geom)`
+- `bboxes(::Type{LatLon}, custom_geom)`
 
 !!! note
     To ensure optimal speed for the inclusion algorithm, it is recommended that this function returns a pre-computed iterable of `Box`s rather than computing it at runtime, at least for the method with `Cartesian` as crs as that is used by the fast point inclusion algorithm.
