@@ -78,3 +78,22 @@ end
     @test @nallocs(to_multi($LatLon, gb)) == 0
     @test @nallocs(to_multi($Cartesian, gb)) == 0
 end
+
+@testitem "warnings" setup=[setup_basic] begin
+    p = rand(PolyArea; crs = LatLon)
+    @test_logs (:warn, r"internal") polyareas(LatLon, p)
+    # We test that it doesn't warn with the nowarn keyword
+    @test_logs polyareas(LatLon, p; nowarn = true)
+
+    # We test that providing `fix_antimeridian_crossing` gives a warning with input FastInGeometry
+
+    b = GeoBorders(p)
+    @test_logs (:warn, r"ignored") GeoBorders(b; fix_antimeridian_crossing = true)
+end
+
+@testitem "show" setup=[setup_basic] begin
+
+    gb = GeoBorders{Float64}(rand(PolyArea, 10; crs = LatLon))
+
+    repr(gb)
+end

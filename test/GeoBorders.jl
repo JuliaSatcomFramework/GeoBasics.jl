@@ -169,4 +169,8 @@ end
     @test length(dmn) == 2
     @test in(p_sg, dmn)
     @test in(p_wg, dmn)
+
+    dgb = GeoBorders(dmn)
+
+    @test polyareas(LatLon, dgb) == mapreduce(polyareas(LatLon), vcat, dmn)
 end
