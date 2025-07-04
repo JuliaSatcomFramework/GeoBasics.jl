@@ -58,6 +58,17 @@ function GeoBorders{T}(geoms::AbstractVector; fix_antimeridian_crossing::Optiona
             push!(cart_bboxes, boundingbox(cartp))
         end
     end
+    # We remove duplicate polyareas
+    idxs = eachindex(latlon_polyareas)
+    # Unique needs both `isequal` and `hash` to be defined to work, so it does not remove duplicate polyareas. We do unique based on the polyarea vertices as that works
+    unique_idxs = unique(i -> vertices(latlon_polyareas[i]), idxs)
+    if length(unique_idxs) < length(idxs)
+        # We remove entries for related to duplicate polyareas
+        latlon_polyareas = keepat!(latlon_polyareas, unique_idxs)
+        latlon_bboxes = keepat!(latlon_bboxes, unique_idxs)
+        cart_polyareas = keepat!(cart_polyareas, unique_idxs)
+        cart_bboxes = keepat!(cart_bboxes, unique_idxs)
+    end
     return GeoBorders{T}(latlon_polyareas, latlon_bboxes, cart_polyareas, cart_bboxes)
 end
 GeoBorders{T}(geometry::Geometry; fix_antimeridian_crossing::Optional{Bool} = NotProvided()) where T <: AbstractFloat = GeoBorders{T}([geometry]; fix_antimeridian_crossing)
