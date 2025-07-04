@@ -176,4 +176,4 @@ end
 to_documenter(plt) # hide
 ```
 !!! note
-    The `fix_antimeridian_crossing` keyword argument is only respected for input geometries which are not already implementing the `FastInGeometry` interface. As mentioned in the [`polyareas`](@ref) docstrings, the polygons of `FastInGeometry` are already assumed to be correct
+    The `fix_antimeridian_crossing` keyword argument is only respected for input geometries which are not already implementing the `FastInGeometry` interface. As mentioned in the [`polyareas`](@ref) docstrings, the polygons of `FastInGeometry` are already assumed to be fixed and so will always be kept as defined within the geometry.
