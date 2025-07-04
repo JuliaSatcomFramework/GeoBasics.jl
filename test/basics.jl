@@ -95,7 +95,8 @@ end
 
     gb = GeoBorders{Float64}(rand(PolyArea, 10; crs = LatLon))
 
-    repr(gb)
+    @test startswith(repr(gb), "GeoBorders{Float64}(")
+    @test startswith(repr(MIME"text/plain"(), gb), "GeoBorders{Float64}\n")
 end
 
 
