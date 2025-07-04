@@ -65,8 +65,8 @@ Point with GeodeticLatLon{WGS84Latest} coordinates
 
 julia> to_latlon_point(LatLon(20,10)) # Extract precision from `LatLon` input
 Point with GeodeticLatLon{WGS84Latest} coordinates
-├─ lat: 10.0°
-└─ lon: 20.0°
+├─ lat: 20.0°
+└─ lon: 10.0°
 ```
 
 See also [`to_cart_point`](@ref).
