@@ -63,23 +63,3 @@ for nm in (:polyareas, :bboxes)
         return $nm(T, geoborders(x; exception))
     end
 end
-
-"""
-    to_multi(crs, geom)
-    to_multi(crs)
-
-Returns a `Multi` object containing the `PolyArea`s associated to the input geometry and returned by calling `polyareas(crs, geom)`.
-
-When called with just the crs type as argument, it simply returns `Base.Fix1(to_multi, crs)`.
-
-This is intended to simplify the generation of a plain `Multi` object for further processing using standard functions from `Meshes.jl`.
-
-GeoBasics explicitly avoids extending methods from `Meshes.jl` on `FastInGeometry` objects to encourage users to explicitly decide whether to use the `LatLon` or `Cartesian` CRS instead of *magically* taking a decision on their behalf.
-
-!!! note
-    The computational cost of this function for types which have a valid method for [`geoborders`](@ref) is almost free (~1-2 nanoseconds).
-
-See also [`geoborders`](@ref), [`polyareas`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref). 
-"""
-to_multi(T::VALID_CRS, geom) = Multi(polyareas(T, geom))
-to_multi(T::VALID_CRS) = Base.Fix1(to_multi, T)

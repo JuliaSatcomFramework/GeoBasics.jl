@@ -18,12 +18,12 @@ export FastInGeometry, GeoBorders
 include("geoborders.jl")
 
 include("interface.jl")
-export polyareas, bboxes, geoborders, to_multi
+export polyareas, bboxes, geoborders
 
 include("deps_interface.jl")
 
 include("helpers.jl")
-export to_cart_point, to_latlon_point
+export to_cart_point, to_latlon_point, to_multi
 
 include("antimeridian.jl")
 
