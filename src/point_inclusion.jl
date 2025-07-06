@@ -21,4 +21,4 @@ end
 in_exit_early(p, x) = in_exit_early(p, polyareas(Cartesian, x), bboxes(Cartesian, x))
 
 Base.in(p::Union{VALID_POINT, LATLON}, geom::FastInGeometry) = in_exit_early(p, geom)
-Base.in(p::Union{VALID_POINT, LATLON}, dmn::FastInDomain) = any(el -> in_exit_early(p, el), dmn)
+Base.in(p::Union{VALID_POINT, LATLON}, dmn::VALID_DOMAINS) = any(el -> in_exit_early(p, el), dmn)

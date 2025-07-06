@@ -13,7 +13,7 @@ export LatLon, Cartesian # From CoordRefSystems.jl
 export @u_str # From Unitful.jl
 
 include("types.jl")
-export FastInGeometry, GeoBorders
+export FastInGeometry, FastInDomain, GeoBorders
 
 include("geoborders.jl")
 
@@ -23,7 +23,7 @@ export polyareas, bboxes, geoborders
 include("deps_interface.jl")
 
 include("helpers.jl")
-export to_cart_point, to_latlon_point, to_multi
+export to_cart_point, to_latlon_point, to_multi, to_gset
 
 include("antimeridian.jl")
 

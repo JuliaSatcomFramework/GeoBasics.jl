@@ -173,6 +173,24 @@ See also [`geoborders`](@ref), [`polyareas`](@ref), [`bboxes`](@ref), [`FastInGe
 to_multi(T::VALID_CRS, geom) = Multi(polyareas(T, geom))
 to_multi(T::VALID_CRS) = Base.Fix1(to_multi, T)
 
+"""
+    to_gset(crs, dmn)
+    to_gset(crs)
+
+Returns a `GeometrySet` object containing the `PolyArea`s associated to the input domain and returned by concatenating the output of `polyareas(crs, geom)` for each geometry `geom` in the input domain `dmn`.
+
+When called with just the crs type as argument, it simply returns `Base.Fix1(to_gset, crs)`.
+
+This is intended to simplify the generation of a plain `GeometrySet` object of the desired CRS for further processing using standard functions from `Meshes.jl`. It is the parallel of [`to_multi`](@ref) for domains rather than geometries.
+
+GeoBasics explicitly avoids extending methods from `Meshes.jl` on domains of `FastInGeometry` objects to encourage users to explicitly decide whether to use the `LatLon` or `Cartesian` CRS instead of *magically* taking a decision on their behalf.
+
+See also [`to_multi`](@ref), [`polyareas`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref). 
+"""
+to_gset(crs::VALID_CRS, dmn::VALID_DOMAINS) = GeometrySet(mapreduce(collect_if_needed ∘ polyareas(crs), vcat, dmn))
+to_gset(crs::VALID_CRS) = Base.Fix1(to_gset, crs)
+
+
 #= 
 Methods for polyareas for types from Meshes. This are mostly used for the construction of GeoBorders objects
 =#
@@ -203,3 +221,6 @@ function polyareas(T::VALID_CRS, p::VALID_POLY; nowarn = false)
     Iterators.map(f, (p, ))
 end
 
+# This is just collect, but no-op for vectors
+collect_if_needed(x::Vector) = x
+collect_if_needed(x) = collect(x)

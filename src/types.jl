@@ -50,11 +50,31 @@ See the docstrings of the respective methods for more details.
 """
 abstract type FastInGeometry{T} <: Geometry{🌐,LATLON{T}} end
 
+"""
+    FastInDomain{T} <: Domain{🌐,LATLON{T}}
+
+Abstract type representing a domain of `FastInGeometry{T}` geometries, with the type parameter `T` representing the machine precision of the underlying coordinates.
+
+This type can be subtypes by custom types that represent domains and want to participate in the `FastInGeometry` interface for fast point inclusion.
+
+# Required methods
+To properly work for fast point inclusion, the custom subtypes of `FastInDomain` need as a minimum to add valid methods to the following two functions from Meshes.jl:
+- `Meshes.nelements(custom_domain)`: This should return the number of geometries within the domain
+- `Meshes.element(custom_domain, ind)`: This should return the `ind`-th geometry from the domain
+
+See also: [`FastInGeometry`](@ref), [`to_gset`](@ref)
+"""
+abstract type FastInDomain{T} <: Domain{🌐,LATLON{T}} end
+
 # Forwarding relevant meshes functions for the FastInGeometry type
 const VALID_CRS = Union{Type{LatLon}, Type{Cartesian}}
 
 const FastInGeometrySet{T, G <: FastInGeometry{T}} = GeometrySet{🌐, LATLON{T}, G}
-const FastInSubDomain{T, G} = SubDomain{🌐, LATLON{T}, FastInGeometrySet{T, G}, Vector{Int}}
-const FastInDomain{T, G} = Union{FastInSubDomain{T, G}, FastInGeometrySet{T, G}}
-# This is the generic UnionAll containig all types where a fast point inclusion algorithm is defined
-const FastInType{T, G <: FastInGeometry{T}} = Union{G, FastInDomain{T, G}}
+const FastInDomainUnion{T} = Union{FastInDomain{T}, FastInGeometrySet{T}}
+const FastInSubDomain{T, D <: FastInDomainUnion{T}, I <: AbstractVector{Int}} = SubDomain{🌐, LATLON{T}, D, I}
+
+"""
+    VALID_DOMAINS{T}
+This is the union representing all domains for which fast point inclusion algorithm is defined. It contains both [`FastInDomain`](@ref) defined in this package as well as a plain `GeometrySet` of `FastInGeometry` objects as well as `SubDomain`s of either of the previous domains
+"""
+const VALID_DOMAINS{T} = Union{FastInDomainUnion{T}, FastInSubDomain{T}}
