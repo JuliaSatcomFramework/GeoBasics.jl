@@ -127,4 +127,17 @@ end
     @test all(getters) do f
         f(kept_gb) == f(deleted_gb) == f(ref_gb)[to_keep]
     end
+
+    # We now test with bitvector inputs
+    to_keep = falses(npolys)
+    to_keep[1:4] .= true
+    to_delete = trues(npolys)
+    to_delete[1:4] .= false
+
+    kept_gb = keepat!(GeoBorders{Float64}(polys), to_keep)
+    deleted_gb = deleteat!(GeoBorders{Float64}(polys), to_delete)
+
+    @test all(getters) do f
+        f(kept_gb) == f(deleted_gb) == f(ref_gb)[to_keep]
+    end
 end
