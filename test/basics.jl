@@ -106,4 +106,25 @@ end
     gb = GeoBorders{Float64}(rand(PolyArea, 10; crs = LatLon))
 
     @test GeoPlottingHelpers.geom_iterable(gb) == polyareas(LatLon, gb)
+
+    ## Base methods
+
+    polys = rand(PolyArea, 10; crs = LatLon)
+    ref_gb = GeoBorders{Float64}(polys)
+
+    npolys = length(polyareas(Cartesian, ref_gb))
+
+    to_keep = 1:4
+    to_delete = 5:npolys
+
+    getters = map(Iterators.product((polyareas, bboxes), (LatLon, Cartesian))) do (f, crs)
+        Base.Fix1(f, crs)
+    end
+
+    kept_gb = keepat!(GeoBorders{Float64}(polys), to_keep)
+    deleted_gb = deleteat!(GeoBorders{Float64}(polys), to_delete)
+
+    @test all(getters) do f
+        f(kept_gb) == f(deleted_gb) == f(ref_gb)[to_keep]
+    end
 end
