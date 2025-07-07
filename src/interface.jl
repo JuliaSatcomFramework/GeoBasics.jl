@@ -7,7 +7,7 @@ function geoborders end # Defined in geoborders.jl
 
 Returns an iterable of the 2D `PolyArea`s associated to the input geometry defined over the Earth's surface.
 
-!!! note
+!!! note "Antimeridian"
     The `PolyArea` objects returned by this function are expected to represent polygons which never cross the antimeridian line (if a polygon is expected to cross the antimeridian line, it should be split into separate polygons divided at the antimeridian line). See the documentation of the package for more details.
 
 # Arguments
@@ -25,7 +25,7 @@ When implementing the `FastInGeometry` interface for types where `geoborders` do
 - `polyareas(::Type{LatLon}, custom_geom)`
 
 
-!!! note
+!!! note "Performance"
     To ensure optimal speed for the inclusion algorithm, it is recommended that this function returns a pre-computed iterable of `PolyArea`s rather than computing it at runtime, at least for the method with `Cartesian` as crs as that is used by the fast point inclusion algorithm.
 """
 polyareas(::Type{LatLon}, b::GeoBorders) = b.latlon_polyareas
@@ -53,7 +53,7 @@ When implementing the `FastInGeometry` interface for types where `geoborders` do
 - `bboxes(::Type{Cartesian}, custom_geom)`
 - `bboxes(::Type{LatLon}, custom_geom)`
 
-!!! note
+!!! note "Performance"
     To ensure optimal speed for the inclusion algorithm, it is recommended that this function returns a pre-computed iterable of `Box`s rather than computing it at runtime, at least for the method with `Cartesian` as crs as that is used by the fast point inclusion algorithm.
 """
 bboxes(::Type{LatLon}, b::GeoBorders) = b.latlon_bboxes

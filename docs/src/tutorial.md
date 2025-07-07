@@ -6,12 +6,13 @@ This package was born from the need of ensuring a simple way of optimizing the p
 
 We need to define multiple types of such regions in our downstream packages (e.g. [CountriesBorders.jl](https://github.com/JuliaSatcomFramework/CountriesBorders.jl)) and we want to minimize code duplication as much as possible.
 
-The traditional `p in region` is well defined in `Meshes.jl` but is suboptimal when one wants to check a lot of points (e.g. thousands) over a domain spanning multiple polygons (e.g. the domain of all polygons associated to all countries).
+The traditional `p in region` is well defined in `Meshes.jl` but is suboptimal in terms of performance when one wants to check a lot of points (e.g. thousands) over a domain spanning multiple polygons (e.g. the domain of all polygons associated to all countries).
 The complexity of checking for point inclusion in a polygon increases with the number of points in the polygon, and when you have lots of points and lots of polygons, most of your `point/polygon` pair will return false.
 
 The approach to speed up computations taken in this package is to create custom geometries that store not only the polyareas but also the bounding boxes (i.e. a `Box` from `Meshes.jl`) associated to each polyarea. 
 The modified inclusion algorithm then simply prefilters `point/polygon` pairs by checking first inclusion in the bounding box (which is extremely fast) and falling back to checkin inclusion in the polygon only if `p in bbox` is `true`.
 This has shown to provide speed ups of 20x-40x in tests when implemented for the [CountriesBorders.jl](https://github.com/JuliaSatcomFramework/CountriesBorders.jl) downstream package (see [this PR](https://github.com/JuliaSatcomFramework/CountriesBorders.jl/pull/47))
+
 
 ## FastInGeometry Interface
 
@@ -28,11 +29,16 @@ As an example, see the following code snippet defining a simple geometry that sa
 using GeoBasics
 
 # Define a custom type which subtypes 
-struct SimpleGeometry{Float64} <: FastInGeometry{Float64}
+struct SimpleGeometry <: FastInGeometry{Float64}
     name::String
     borders::GeoBorders{Float64}
 end
 ```
+
+!!! note "Cartesian CRS"
+    The custom geometries adhering to the `FastInGeometry` interface are expected to store the relevant `bboxes` and `polyareas` both in the `LatLon` and `Cartesian2D` CRS. This is because many of Meshes advanced methods are better defined for `Cartesian2D` and so we want to have an easier access to the geometries also in this CRS. 
+    
+    The conversion between `LatLon` and `Cartesian2D` corresponds to an [`Equirectangular projection`](https://en.wikipedia.org/wiki/Equirectangular_projection) where 1° of latitude/longitude is mapped to 1m in the projected space. This is also equivalent to the transformation achived by calling the `Meshes.flat` function to a point in `LatLon` CRS. 
 
 ## GeoBorders
 
@@ -51,7 +57,7 @@ using PlotlyBase
 using PlotlyDocumenter
 
 complex_s_poly = let
-    f = Base.Fix1(to_cart_point, Float64)
+    f = to_cart_point
     outer = map(f, [ # Exterior part of the polygon, crossing the antimeridian multiple times
         (160,30),
         (-160,30),
@@ -177,3 +183,33 @@ to_documenter(plt) # hide
 ```
 !!! note
     The `fix_antimeridian_crossing` keyword argument is only respected for input geometries which are not already implementing the `FastInGeometry` interface. As mentioned in the [`polyareas`](@ref) docstrings, the polygons of `FastInGeometry` are already assumed to be fixed and so will always be kept as defined within the geometry.
+
+## FastInDomain Interface
+
+As alternative to subtyping [`FastInGeometry`](@ref), custom types can also participate to the fast inclusion algorithms if they subtype [`FastInDomain`](@ref). 
+
+In this case, the custom subtype must represent a domain containing geometries implementing the [`FastInGeometry`](@ref) interface and must implement have valid methods for the following two functions from `Meshes.jl`:
+- `Meshes.nelements(custom_domain)`: This should return the number of geometries within the domain
+- `Meshes.element(custom_domain, ind)`: This should return the `ind`-th geometry from the domain
+
+See an example implementation of a custom domain with elements of a custom geometry satisfying the interface
+
+```julia
+struct SimpleGeometry <: FastInGeometry{Float64}
+    name::String
+    borders::GeoBorders{Float64}
+end
+
+function SimpleGeometry(geoms; name = "SimpleGeometry")
+    borders = GeoBorders{Float64}(geoms)
+    return SimpleGeometry(name, borders)
+end
+
+struct SimpleDomain <: FastInDomain{Float64}
+    name::String
+    geoms::Vector{SimpleGeometry}
+end
+
+Meshes.nelements(sd::SimpleDomain) = length(sd.geoms)
+Meshes.element(sd::SimpleDomain, ind::Int) = sd.geoms[ind]
+```

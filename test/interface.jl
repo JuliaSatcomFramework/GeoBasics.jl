@@ -123,6 +123,7 @@ end
 
     p_sg = last(polyareas(Cartesian, sg)) |> centroid
     @test in(p_sg, sg)
+    @test @nallocs(in(p_sg, sg)) == 0
 
     # We test a more complicated geometry which does not have GeoBorders as direct field and only implements `polyareas` and `bboxes`
     struct WeirdGeometry{NT} <: FastInGeometry{Float32}
@@ -161,6 +162,7 @@ end
 
     p_wg = last(polyareas(Cartesian, wg)) |> centroid
     @test in(p_wg, wg)
+    @test @nallocs(in(p_wg, wg)) == 0
     
     # We try to create a domain, but since GeometrySet expects same type geometries we create a SimpleGeometry from the WeirdGeometry. This is valid as the GeoBorders constructor works with polyareas for FastInGeometry types
     sg_wg = SimpleGeometry(wg)
@@ -221,6 +223,9 @@ end
     ]
     dmn = SimpleDomain("Example Domain", map(p -> SimpleGeometry(p), polys))
 
+    # This is mostly a test for coverage
+    @test (0,0) in dmn
+
     # We test that point inclusion works and that it does not allocate
     for poly in polys
         for v in vertices(poly)
@@ -231,7 +236,7 @@ end
 
     # We also test that `to_gset` extracts a GeometrySet of correct CRS
     cart_gset = to_gset(Cartesian, dmn)
-    latlon_gset = to_gset(LatLon, dmn)
+    latlon_gset = dmn |> to_gset(LatLon)
 
     @test cart_gset isa GeometrySet && crs(cart_gset) <: Cartesian2D{WGS84Latest}
     @test latlon_gset isa GeometrySet && crs(latlon_gset) <: LatLon{WGS84Latest}

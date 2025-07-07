@@ -79,16 +79,23 @@ end
 for name in (:to_cart_point, :to_latlon_point)
     @eval $name(T::Type{<:AbstractFloat}) = Base.Fix1($name, T)
     @eval $name(x) = $name(common_valuetype(AbstractFloat, Float32, x), x)
+    # Methods for tuple which extract the valuetype from the input
+    @eval $name(tp::Tuple{Number, Number}) = $name(common_valuetype(AbstractFloat, Float32, tp...), tp)
 end
+
+
 
 ## Enforcing or changing a geometry from LatLon to Cartesian or vice versa
 """
-    cartesian_geometry([T::Type{<:AbstractFloat}, ] geom)
+    cartesian_geometry(T::Type{<:AbstractFloat}, geom)
     cartesian_geometry(T::Type{<:AbstractFloat})
+    cartesian_geometry(geom)
 
 Convert geometries from LatLon to Cartesian coordinate systems, optionally changing the underlying machine type of the points to `T`
 
-The second method simply returns a function that applies the conversion with the provided machine type to any geometry.
+The second method simply returns `Base.Fix1(cartesian_geometry, T)`.
+
+The third method, will try to extract the machine precision from `geom` and translates to `cartesian_geometry(BasicTypes.valuetype(geom), geom)`.
 
 ## Arguments
 - `T::Type{<:AbstractFloat}`: The desired machine type of the points in the output geometry. If not provided, it will default to the machine type of the input geometry.
@@ -118,12 +125,15 @@ cartesian_geometry(T::Type{<:AbstractFloat}) = Base.Fix1(cartesian_geometry, T)
 cartesian_geometry(x) = cartesian_geometry(valuetype(x), x)
 
 """
-    latlon_geometry([T::Type{<:AbstractFloat}, ] geom)
+    latlon_geometry(T::Type{<:AbstractFloat}, geom)
     latlon_geometry(T::Type{<:AbstractFloat})
+    latlon_geometry(geom)
 
 Convert geometries from Cartesian to LatLon coordinate systems, optionally changing the underlying machine type of the points to `T`
 
-The second method simply returns a function that applies the conversion with the provided machine type to any geometry. 
+The second method simply returns `Base.Fix1(latlon_geometry, T)`.
+
+The third method, will try to extract the machine precision from `geom` and translates to `latlon_geometry(BasicTypes.valuetype(geom), geom)`.
 
 ## Arguments
 - `T::Type{<:AbstractFloat}`: The desired machine type of the points in the output geometry. If not provided, it will default to the machine type of the input geometry.
@@ -165,7 +175,7 @@ This is intended to simplify the generation of a plain `Multi` object for furthe
 
 GeoBasics explicitly avoids extending methods from `Meshes.jl` on `FastInGeometry` objects to encourage users to explicitly decide whether to use the `LatLon` or `Cartesian` CRS instead of *magically* taking a decision on their behalf.
 
-!!! note
+!!! note "Performance"
     The computational cost of this function for types which have a valid method for [`geoborders`](@ref) is almost free (~1-2 nanoseconds).
 
 See also [`geoborders`](@ref), [`polyareas`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref). 

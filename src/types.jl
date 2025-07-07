@@ -36,8 +36,13 @@ The type parameter `T` represents the machine precision of the underlying coordi
 The fast inclusion algorithm is quite simple and relies on having a bounding box defined for each polygon part of the `FastInGeometry`. The custom inclusion algorithm simply iterates through all polygons and prefilter points by checking inclusion in the bounding box (which is an almost free operation). This can have significant speed ups especially if the polygons have a lot of points.
 
 The following methods are added to `Base.in` to exploit the fast inclusion algorithm for custom subtypes adhering to the `FastInGeometry` (or `FastInDomain`) interface:
-- `Base.in(p, g::FastInGeometry)`
-- `Base.in(p, d::FastInDomain)`
+- `Base.in(p, x::FastInGeometry)`
+- `Base.in(p, x::VALID_DOMAINS)`
+
+!!! note "Input Types"
+    The point `p` provided as input is internally converted to within the function by using `to_cart_point(valuetype(x), p)`, so custom types representing points on the Earth's surface can also be used with `Base.in` by having a valid method for `to_cart_point` or to `GeoPlottingHelpers.to_raw_lonlat` which the former falls back to.
+
+    The `VALID_DOMAINS` type alias encompasses `FastInDomain`, `GeometrySet` with `FastInGeometry` elements and `SubDomain`s of either of the previous domains.
 
 ## Interface
 For custom subtypes of `FastInGeometry` that do not contain a field that is a subtype of `GeoBorders`, the following methods are expected to be implemented:
@@ -52,16 +57,32 @@ abstract type FastInGeometry{T} <: Geometry{🌐,LATLON{T}} end
 """
     FastInDomain{T} <: Domain{🌐, LatLon{WGS84Latest, Deg{T}}}
 
-Abstract type representing a domain of `FastInGeometry{T}` geometries, with the type parameter `T` representing the machine precision of the underlying coordinates.
+Abstract type representing a domain of `FastInGeometry{T}` geometries.
 
 This type can be subtypes by custom types that represent domains and want to participate in the `FastInGeometry` interface for fast point inclusion.
 
-# Required methods
+See also: [`FastInGeometry`](@ref), [`to_gset`](@ref)
+
+# Extended Help
+## Type Parameter
+The type parameter `T` represents the machine precision of the underlying coordinates and is expected to be a subtype of `AbstractFloat` for the public API. This is in line with the public API of `Meshes.jl` and `CoordRefSystems.jl` that this package heavily relies on.
+
+## Fast Inclusion Algorithm
+The fast inclusion algorithm is quite simple and relies on having a bounding box defined for each polygon part of the `FastInGeometry`. The custom inclusion algorithm simply iterates through all polygons and prefilter points by checking inclusion in the bounding box (which is an almost free operation). This can have significant speed ups especially if the polygons have a lot of points.
+
+The following methods are added to `Base.in` to exploit the fast inclusion algorithm for custom subtypes adhering to the `FastInGeometry` (or `FastInDomain`) interface:
+- `Base.in(p, x::FastInGeometry)`
+- `Base.in(p, x::VALID_DOMAINS)`
+
+!!! note "Input Types"
+    The point `p` provided as input is internally converted to within the function by using `to_cart_point(valuetype(x), p)`, so custom types representing points on the Earth's surface can also be used with `Base.in` by having a valid method for `to_cart_point` or to `GeoPlottingHelpers.to_raw_lonlat` which the former falls back to.
+
+    The `VALID_DOMAINS` type alias encompasses `FastInDomain`, `GeometrySet` with `FastInGeometry` elements and `SubDomain`s of either of the previous domains.
+
+## Interface
 To properly work for fast point inclusion, the custom subtypes of `FastInDomain` need as a minimum to add valid methods to the following two functions from Meshes.jl:
 - `Meshes.nelements(custom_domain)`: This should return the number of geometries within the domain
 - `Meshes.element(custom_domain, ind)`: This should return the `ind`-th geometry from the domain
-
-See also: [`FastInGeometry`](@ref), [`to_gset`](@ref)
 """
 abstract type FastInDomain{T} <: Domain{🌐,LATLON{T}} end
 

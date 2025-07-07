@@ -2,6 +2,11 @@
 
 The following functions are neither public nor exported and may be subject to change in future non-breaking releases.
 
+## Types
+```@docs
+GeoBasics.VALID_DOMAINS
+```
+
 ## Helpers
 ```@docs
 GeoBasics.in_exit_early
