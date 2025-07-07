@@ -93,14 +93,14 @@ end
 @testitem "FastInGeometry interface" setup=[setup_geoborders] begin
     # We try implementing a type supporting the `FastInGeometry` interface in the simplest way possible, by having a field of type `GeoBorders`
 
-    struct SimpleGeometry{Float64} <: FastInGeometry{Float64}
+    struct SimpleGeometry <: FastInGeometry{Float64}
         name::String
         borders::GeoBorders{Float64}
     end
 
     function SimpleGeometry(geoms; name = "SimpleGeometry")
         borders = GeoBorders{Float64}(geoms)
-        return SimpleGeometry{Float64}(name, borders)
+        return SimpleGeometry(name, borders)
     end
 
     ps = rand(PolyArea, 10; crs = LatLon)
@@ -186,4 +186,56 @@ end
     gb = GeoBorders{Float64}(geoms)
 
     @test length(polyareas(LatLon, gb)) == 2
+end
+
+@testitem "FastInDomain" setup=[setup_geoborders] begin
+    # We try to a custom domain with a custom FastInGeometry type
+    struct SimpleGeometry <: FastInGeometry{Float64}
+        name::String
+        borders::GeoBorders{Float64}
+    end
+
+    function SimpleGeometry(geoms; name = "SimpleGeometry")
+        borders = GeoBorders{Float64}(geoms)
+        return SimpleGeometry(name, borders)
+    end
+
+    struct SimpleDomain <: FastInDomain{Float64}
+        name::String
+        geoms::Vector{SimpleGeometry}
+    end
+
+    Meshes.nelements(sd::SimpleDomain) = length(sd.geoms)
+    Meshes.element(sd::SimpleDomain, ind::Int) = sd.geoms[ind]
+
+    function SquarePoly(center, halfside)
+        center = to_cart_point(Float64, center)
+        v = to_cart_point(Float64, (halfside, halfside)) |> to # Make a Vec from meshes
+        return polyareas(Cartesian, Box(center - v, center + v); nowarn = true) |> only
+    end
+
+    polys = [
+        SquarePoly((0,0), 1),
+        SquarePoly((20,10), 1),
+        SquarePoly((-20,-10), 1),
+    ]
+    dmn = SimpleDomain("Example Domain", map(p -> SimpleGeometry(p), polys))
+
+    # We test that point inclusion works and that it does not allocate
+    for poly in polys
+        for v in vertices(poly)
+            @test in(v, dmn)
+            @test @nallocs(in(v, dmn)) == 0
+        end
+    end
+
+    # We also test that `to_gset` extracts a GeometrySet of correct CRS
+    cart_gset = to_gset(Cartesian, dmn)
+    latlon_gset = to_gset(LatLon, dmn)
+
+    @test cart_gset isa GeometrySet && crs(cart_gset) <: Cartesian2D{WGS84Latest}
+    @test latlon_gset isa GeometrySet && crs(latlon_gset) <: LatLon{WGS84Latest}
+
+    # We test that all original polygons are present in the cartesian geoemtry set
+    @test all(poly -> poly in cart_gset, polys)
 end
