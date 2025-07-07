@@ -22,7 +22,7 @@ const BOX_CART{T} = Box{𝔼{2}, CART{T}}
 const VALID_BOX{T} = Union{BOX_LATLON{T}, BOX_CART{T}}
 
 """
-    FastInGeometry{T} <: Geometry{🌐,LATLON{T}}
+    FastInGeometry{T} <: Geometry{🌐, LatLon{WGS84Latest,Deg{T}}}
 
 Abstract type identifying geometries over Earth's surface where a fast custom algorithm for checking point inclusion is available. 
 
@@ -35,10 +35,9 @@ The type parameter `T` represents the machine precision of the underlying coordi
 ## Fast Inclusion Algorithm
 The fast inclusion algorithm is quite simple and relies on having a bounding box defined for each polygon part of the `FastInGeometry`. The custom inclusion algorithm simply iterates through all polygons and prefilter points by checking inclusion in the bounding box (which is an almost free operation). This can have significant speed ups especially if the polygons have a lot of points.
 
-For subtypes if `FastInGeometry`, the following methods are added to exploit the fast inclusion algorithm by default:
-- `Base.in(p::VALID_POINT, g::FastInType)`
-- `Base.in(p::LATLON, g::FastInType)`
-where `VALID_POINT`, `LATLON` and `FastInType` are type aliases defined (but not exported) in the package.
+The following methods are added to `Base.in` to exploit the fast inclusion algorithm for custom subtypes adhering to the `FastInGeometry` (or `FastInDomain`) interface:
+- `Base.in(p, g::FastInGeometry)`
+- `Base.in(p, d::FastInDomain)`
 
 ## Interface
 For custom subtypes of `FastInGeometry` that do not contain a field that is a subtype of `GeoBorders`, the following methods are expected to be implemented:
@@ -51,7 +50,7 @@ See the docstrings of the respective methods for more details.
 abstract type FastInGeometry{T} <: Geometry{🌐,LATLON{T}} end
 
 """
-    FastInDomain{T} <: Domain{🌐,LATLON{T}}
+    FastInDomain{T} <: Domain{🌐, LatLon{WGS84Latest, Deg{T}}}
 
 Abstract type representing a domain of `FastInGeometry{T}` geometries, with the type parameter `T` representing the machine precision of the underlying coordinates.
 
