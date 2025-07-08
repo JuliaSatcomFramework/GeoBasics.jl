@@ -40,7 +40,7 @@ The following methods are added to `Base.in` to exploit the fast inclusion algor
 - `Base.in(p, x::VALID_DOMAINS)`
 
 !!! note "Input Types"
-    The point `p` provided as input is internally converted to within the function by using `to_cart_point(valuetype(x), p)`, so custom types representing points on the Earth's surface can also be used with `Base.in` by having a valid method for `to_cart_point` or to `GeoPlottingHelpers.to_raw_lonlat` which the former falls back to.
+    The point `p` provided as input is internally converted to within the function by using `to_cartesian_point(valuetype(x), p)`, so custom types representing points on the Earth's surface can also be used with `Base.in` by having a valid method for `to_cartesian_point` or to `GeoPlottingHelpers.to_raw_lonlat` which the former falls back to.
 
     The `VALID_DOMAINS` type alias encompasses `FastInDomain`, `GeometrySet` with `FastInGeometry` elements and `SubDomain`s of either of the previous domains.
 
@@ -75,7 +75,7 @@ The following methods are added to `Base.in` to exploit the fast inclusion algor
 - `Base.in(p, x::VALID_DOMAINS)`
 
 !!! note "Input Types"
-    The point `p` provided as input is internally converted to within the function by using `to_cart_point(valuetype(x), p)`, so custom types representing points on the Earth's surface can also be used with `Base.in` by having a valid method for `to_cart_point` or to `GeoPlottingHelpers.to_raw_lonlat` which the former falls back to.
+    The point `p` provided as input is internally converted to within the function by using `to_cartesian_point(valuetype(x), p)`, so custom types representing points on the Earth's surface can also be used with `Base.in` by having a valid method for `to_cartesian_point` or to `GeoPlottingHelpers.to_raw_lonlat` which the former falls back to.
 
     The `VALID_DOMAINS` type alias encompasses `FastInDomain`, `GeometrySet` with `FastInGeometry` elements and `SubDomain`s of either of the previous domains.
 
@@ -87,6 +87,11 @@ To properly work for fast point inclusion, the custom subtypes of `FastInDomain`
 abstract type FastInDomain{T} <: Domain{🌐,LATLON{T}} end
 
 # Forwarding relevant meshes functions for the FastInGeometry type
+"""
+const VALID_CRS = Union{Type{LatLon}, Type{Cartesian}}
+
+Union type representing the valid CRS types for the public API of this package. 
+"""
 const VALID_CRS = Union{Type{LatLon}, Type{Cartesian}}
 
 const FastInGeometrySet{T, G <: FastInGeometry{T}} = GeometrySet{🌐, LATLON{T}, G}
@@ -94,7 +99,8 @@ const FastInDomainUnion{T} = Union{FastInDomain{T}, FastInGeometrySet{T}}
 const FastInSubDomain{T, D <: FastInDomainUnion{T}, I <: AbstractVector{Int}} = SubDomain{🌐, LATLON{T}, D, I}
 
 """
-    VALID_DOMAINS{T}
+const VALID_DOMAINS{T} = Union{FastInDomainUnion{T}, FastInSubDomain{T}}
+
 This is the union representing all domains for which fast point inclusion algorithm is defined. It contains both [`FastInDomain`](@ref) defined in this package as well as a plain `GeometrySet` of `FastInGeometry` objects as well as `SubDomain`s of either of the previous domains
 """
 const VALID_DOMAINS{T} = Union{FastInDomainUnion{T}, FastInSubDomain{T}}

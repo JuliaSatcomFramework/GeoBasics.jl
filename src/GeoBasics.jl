@@ -23,7 +23,7 @@ export polyareas, bboxes, geoborders
 include("deps_interface.jl")
 
 include("helpers.jl")
-export to_cart_point, to_latlon_point, to_multi, to_gset
+export to_cartesian_point, to_latlon_point, to_point, to_multi, to_gset
 
 include("antimeridian.jl")
 

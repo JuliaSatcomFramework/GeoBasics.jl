@@ -29,7 +29,7 @@ function split_antimeridian(ring::RING_CART{T}, o = orientation(ring)) where T <
     segs = Vector{ptype}[]
     seg = ptype[]
     function P(lon, lat)
-        to_cart_point(T, (lon, lat))
+        to_cartesian_point(T, (lon, lat))
     end
     δlon(p1, p2) = get_lon(p2) - get_lon(p1)
     for s in segments(ring)

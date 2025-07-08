@@ -5,14 +5,14 @@
     using GeoBasics.CoordRefSystems
     using GeoBasics.BasicTypes: BasicTypes, valuetype
     using GeoBasics.GeoPlottingHelpers: to_raw_lonlat
-    using GeoBasics: to_cart_point, split_antimeridian
+    using GeoBasics: to_cartesian_point, split_antimeridian
     using TestAllocations
 end
 
 @testitem "GeoBorders antimeridian/orientation" setup=[setup_geoborders] begin
     # We create a complex polygon that has a reversed S shape crossing the antimeridian in multiple places
     complex_s_poly = let
-        f = Base.Fix1(to_cart_point, Float64)
+        f = Base.Fix1(to_cartesian_point, Float64)
         outer = map(f, [
             (160,30),
             (-160,30),
@@ -70,7 +70,7 @@ end
         rrings = map(rings(complex_s_poly)) do r
             vs = map(vertices(r)) do p
                 lon, lat = to_raw_lonlat(p)
-                to_cart_point(T, (-lon, lat))
+                to_cartesian_point(T, (-lon, lat))
             end |> Ring
         end |> PolyArea
     end
@@ -211,8 +211,8 @@ end
     Meshes.element(sd::SimpleDomain, ind::Int) = sd.geoms[ind]
 
     function SquarePoly(center, halfside)
-        center = to_cart_point(Float64, center)
-        v = to_cart_point(Float64, (halfside, halfside)) |> to # Make a Vec from meshes
+        center = to_cartesian_point(Float64, center)
+        v = to_cartesian_point(Float64, (halfside, halfside)) |> to # Make a Vec from meshes
         return polyareas(Cartesian, Box(center - v, center + v); nowarn = true) |> only
     end
 

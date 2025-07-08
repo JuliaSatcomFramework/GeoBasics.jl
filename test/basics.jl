@@ -1,7 +1,7 @@
 @testsnippet setup_basic begin
     using GeoBasics
     using GeoBasics: POINT_LATLON, POLY_LATLON, POLY_CART, BOX_LATLON, BOX_CART, POINT_CART
-    using GeoBasics: cartesian_geometry, latlon_geometry, to_latlon_point, to_cart_point
+    using GeoBasics: cartesian_geometry, latlon_geometry, to_latlon_point, to_cartesian_point
     using GeoBasics.GeoPlottingHelpers
     using GeoBasics.BasicTypes: BasicTypes, valuetype
     using GeoBasics.CoordRefSystems
@@ -50,11 +50,11 @@ end
 @testitem "to_xxx_point" setup=[setup_basic] begin
     # Basic checks
     @test to_latlon_point(Float64, (20,10)) isa POINT_LATLON{Float64}
-    @test to_cart_point(Float32, (20,10)) isa POINT_CART{Float32}
+    @test to_cartesian_point(Float32, (20,10)) isa POINT_CART{Float32}
 
     # Check base fix
     @test (20,10) |> to_latlon_point(Float32) === Point(LatLon(10f0, 20f0))
-    @test (20,10) |> to_cart_point(Float32) === Point(Cartesian2D{WGS84Latest}(20f0, 10f0))
+    @test (20,10) |> to_cartesian_point(Float32) === Point(Cartesian2D{WGS84Latest}(20f0, 10f0))
 
     # Check that implementing `to_raw_lonlat` is enough to make a point compatible with `to_latlon_point`
     struct LL
@@ -65,7 +65,7 @@ end
     BasicTypes.valuetype(::LL) = Float64
 
     @test LL(20, 10) |> to_latlon_point(Float32) === Point(LatLon(20f0, 10f0))
-    @test LL(20, 10) |> to_cart_point(Float32) === Point(Cartesian2D{WGS84Latest}(10f0, 20f0))
+    @test LL(20, 10) |> to_cartesian_point(Float32) === Point(Cartesian2D{WGS84Latest}(10f0, 20f0))
 end
 
 @testitem "to_multi" setup=[setup_basic] begin

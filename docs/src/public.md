@@ -18,8 +18,9 @@ bboxes
 ```@docs
 to_multi
 to_gset
-to_cart_point
+to_cartesian_point
 to_latlon_point
+to_point
 Base.keepat!(::GeoBorders, ::Any)
 Base.deleteat!(::GeoBorders, ::Any)
 ```

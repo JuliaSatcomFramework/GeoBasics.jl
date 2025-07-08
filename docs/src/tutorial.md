@@ -57,7 +57,7 @@ using PlotlyBase
 using PlotlyDocumenter
 
 complex_s_poly = let
-    f = to_cart_point
+    f = to_cartesian_point
     outer = map(f, [ # Exterior part of the polygon, crossing the antimeridian multiple times
         (160,30),
         (-160,30),
@@ -117,8 +117,8 @@ to_documenter(plt) # hide
 which can also be verified by checking point inclusion of one point that shouldn't be inside but is, and of one that should be in but isn't:
 ```@example antimeridian
 # We use cartesian point as point inclusion in LatLon is not always defined in Meshes
-should_not = to_cart_point(LatLon(25, 0)) # This is in africa and shouldn't be in the intended polygon
-should_be = to_cart_point(LatLon(25, 180)) # This is in the ocean inside the polygon and outside it's holes
+should_not = to_cartesian_point(LatLon(25, 0)) # This is in africa and shouldn't be in the intended polygon
+should_be = to_cartesian_point(LatLon(25, 180)) # This is in the ocean inside the polygon and outside it's holes
 
 map(in(complex_s_poly), (;should_be, should_not))
 ```

@@ -4,6 +4,7 @@ The following functions are neither public nor exported and may be subject to ch
 
 ## Types
 ```@docs
+GeoBasics.VALID_CRS
 GeoBasics.VALID_DOMAINS
 ```
 

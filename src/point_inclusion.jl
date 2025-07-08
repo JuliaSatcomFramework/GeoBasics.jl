@@ -19,7 +19,7 @@ It is expected that the input `geom` also has a valid method for `BasicTypes.val
 
 See also [`polyareas`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref), [`geoborders`](@ref), [`GeoBorders`](@ref).
 """
-in_exit_early(p, x) = in_exit_early(to_cart_point(p), polyareas(Cartesian, x), bboxes(Cartesian, x))
+in_exit_early(p, x) = in_exit_early(to_cartesian_point(p), polyareas(Cartesian, x), bboxes(Cartesian, x))
 in_exit_early(p, dmn::VALID_DOMAINS) = any(el -> in_exit_early(p, el), dmn)
 
 # Basic methods
