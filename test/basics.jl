@@ -49,8 +49,8 @@ end
 
 @testitem "to_xxx_point" setup=[setup_basic] begin
     # Basic checks
-    @test to_latlon_point(Float64, (20,10)) isa POINT_LATLON{Float64}
-    @test to_cartesian_point(Float32, (20,10)) isa POINT_CART{Float32}
+    @test to_point(LatLon, Float64, (20,10)) isa POINT_LATLON{Float64}
+    @test to_point(Cartesian, Float32, (20,10)) isa POINT_CART{Float32}
 
     # Check base fix
     @test (20,10) |> to_latlon_point(Float32) === Point(LatLon(10f0, 20f0))
