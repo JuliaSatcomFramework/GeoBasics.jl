@@ -3,13 +3,13 @@ get_lon(p) = first(to_raw_lonlat(p))
 get_lat(p) = last(to_raw_lonlat(p))
 
 """
-    to_cartesian_point(T::Type{<:AbstractFloat}, obj)
-    to_cartesian_point(T::Type{<:AbstractFloat})
-    to_cartesian_point(obj)
+    to_cart_point(T::Type{<:AbstractFloat}, obj)
+    to_cart_point(T::Type{<:AbstractFloat})
+    to_cart_point(obj)
 
 Extracts the lat/lon coordinates associated to input `obj` and return them as a `Point` from Meshes with `Cartesian2D{WGS84Latest}` as `CRS` and optionally forcing the underlying machine precision of the coordinates to `T`.
 
-The second method simply returns `Base.Fix1(to_cartesian_point, T)`.
+The second method simply returns `Base.Fix1(to_cart_point, T)`.
 
 The third method, will try to extract the machine precision from `obj` by calling `BasicTypes.valuetype(obj)`.
 
@@ -21,12 +21,12 @@ The third method, will try to extract the machine precision from `obj` by callin
 ```jldoctest
 julia> using GeoBasics
 
-julia> to_cartesian_point(Float32, (10, 20)) # Force precision to `Float32`
+julia> to_cart_point(Float32, (10, 20)) # Force precision to `Float32`
 Point with Cartesian{WGS84Latest} coordinates
 ├─ x: 10.0f0 m
 └─ y: 20.0f0 m
 
-julia> to_cartesian_point(LatLon(20,10)) # Extract precision from `LatLon` input
+julia> to_cart_point(LatLon(20,10)) # Extract precision from `LatLon` input
 Point with Cartesian{WGS84Latest} coordinates
 ├─ x: 10.0 m
 └─ y: 20.0 m
@@ -34,7 +34,7 @@ Point with Cartesian{WGS84Latest} coordinates
 
 See also [`to_latlon_point`](@ref).
 """
-function to_cartesian_point(T::Type{<:AbstractFloat}, p)
+function to_cart_point(T::Type{<:AbstractFloat}, p)
     lon, lat = to_raw_lonlat(p) .|> T
     return Cartesian{WGS84Latest}(lon, lat) |> Point
 end
@@ -69,14 +69,14 @@ Point with GeodeticLatLon{WGS84Latest} coordinates
 └─ lon: 10.0°
 ```
 
-See also [`to_cartesian_point`](@ref).
+See also [`to_cart_point`](@ref).
 """
 function to_latlon_point(T::Type{<:AbstractFloat}, p)
     lon, lat = to_raw_lonlat(p) .|> T
     return LatLon{WGS84Latest}(lat, lon) |> Point
 end
 
-for name in (:to_cartesian_point, :to_latlon_point)
+for name in (:to_cart_point, :to_latlon_point)
     @eval $name(T::Type{<:AbstractFloat}) = Base.Fix1($name, T)
     @eval $name(x) = $name(common_valuetype(AbstractFloat, Float32, x), x)
     # Methods for tuple which extract the valuetype from the input
@@ -87,16 +87,16 @@ end
     to_point(crs::VALID_CRS)
     to_point(crs::VALID_CRS, args...)
 
-Convenience method to call either [`to_cartesian_point`](@ref) or [`to_latlon_point`](@ref) depending on the input CRS (either `LatLon` or `Cartesian`).
+Convenience method to call either [`to_cart_point`](@ref) or [`to_latlon_point`](@ref) depending on the input CRS (either `LatLon` or `Cartesian`).
 
 The first method simply returns the specific function depending on the CRS provided
 
 The second method will forward the extra `args...` to the specfic function based on the CRS provided as first argument.
 
-See also [`to_cartesian_point`](@ref), [`to_latlon_point`](@ref).
+See also [`to_cart_point`](@ref), [`to_latlon_point`](@ref).
 """
 to_point(::Type{LatLon}) = to_latlon_point
-to_point(::Type{Cartesian}) = to_cartesian_point
+to_point(::Type{Cartesian}) = to_cart_point
 to_point(crs::VALID_CRS, args...) = to_point(crs)(args...)
 
 
@@ -122,12 +122,12 @@ The third method, will try to extract the machine precision from `geom` and tran
 """
 function cartesian_geometry(T::Type{<:AbstractFloat}, b::Union{BOX_LATLON, BOX_CART})
     b isa BOX_CART{T} && return b
-    f = to_cartesian_point(T)
+    f = to_cart_point(T)
     return BOX_CART{T}(f(b.min), f(b.max))
 end
 function cartesian_geometry(T::Type{<:AbstractFloat}, ring::Union{RING_CART, RING_LATLON})
     ring isa RING_CART{T} && return ring
-    map(to_cartesian_point(T), vertices(ring)) |> Ring
+    map(to_cart_point(T), vertices(ring)) |> Ring
 end
 function cartesian_geometry(T::Type{<:AbstractFloat}, poly::Union{POLY_LATLON, POLY_CART})
     poly isa POLY_CART{T} && return poly
@@ -233,8 +233,9 @@ function polyareas(T::VALID_CRS, b::VALID_BOX; nowarn = false)
     hi_lon, hi_lat = hi
     Δlon = hi_lon - lo_lon
     # We make a range because with a Box we might have a valid segment longer than 180° of longitude, which would otherwise be split into multiple polyareas
-    lon_range = range(lo_lon, hi_lon; length = floor(Int, Δlon / 180) + 2)
-    f = T === LatLon ? to_latlon_point : to_cartesian_point
+    nlons = floor(Int, Δlon / 180) + 2
+    lon_range = range(lo_lon, hi_lon; length = nlons)
+    f = to_point(T)
     p = Ring(vcat(
         map(lon -> f(LatLon(lo_lat, lon)), lon_range),
         map(lon -> f(LatLon(hi_lat, lon)), reverse(lon_range)),
