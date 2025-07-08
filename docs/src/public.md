@@ -21,6 +21,8 @@ to_gset
 to_cartesian_point
 to_latlon_point
 to_point
+get_lat
+get_lon
 Base.keepat!(::GeoBorders, ::Any)
 Base.deleteat!(::GeoBorders, ::Any)
 ```
