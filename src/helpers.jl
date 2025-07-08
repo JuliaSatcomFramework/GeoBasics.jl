@@ -32,7 +32,7 @@ Point with Cartesian{WGS84Latest} coordinates
 └─ y: 20.0 m
 ```
 
-See also [`to_latlon_point`](@ref).
+See also [`to_latlon_point`](@ref), [`to_point`](@ref).
 """
 function to_cartesian_point(T::Type{<:AbstractFloat}, p)
     lon, lat = to_raw_lonlat(p) .|> T
@@ -69,7 +69,7 @@ Point with GeodeticLatLon{WGS84Latest} coordinates
 └─ lon: 10.0°
 ```
 
-See also [`to_cartesian_point`](@ref).
+See also [`to_cartesian_point`](@ref), [`to_point`](@ref).
 """
 function to_latlon_point(T::Type{<:AbstractFloat}, p)
     lon, lat = to_raw_lonlat(p) .|> T
