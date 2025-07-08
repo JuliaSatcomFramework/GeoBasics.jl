@@ -95,8 +95,8 @@ The second method will forward the extra `args...` to the specfic function based
 
 See also [`to_cart_point`](@ref), [`to_latlon_point`](@ref).
 """
-to_point(::Type{LatLon}) = to_latlon_point
-to_point(::Type{Cartesian}) = to_cart_point
+to_point(::Type{LatLon}) = return to_latlon_point
+to_point(::Type{Cartesian}) = return to_cart_point
 to_point(crs::VALID_CRS, args...) = to_point(crs)(args...)
 
 
