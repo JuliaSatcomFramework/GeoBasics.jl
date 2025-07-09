@@ -1,9 +1,9 @@
 @testsnippet setup_basic begin
     using GeoBasics
-    using GeoBasics: POINT_LATLON, POLY_LATLON, POLY_CART, BOX_LATLON, BOX_CART, POINT_CART
+    using GeoBasics: POINT_LATLON, POLY_LATLON, POLY_CART, BOX_LATLON, BOX_CART, POINT_CART, POLYAREAS_NOWARN
     using GeoBasics: cartesian_geometry, latlon_geometry, to_latlon_point, to_cartesian_point
     using GeoBasics.GeoPlottingHelpers
-    using GeoBasics.BasicTypes: BasicTypes, valuetype
+    using GeoBasics.BasicTypes: BasicTypes, valuetype, with
     using GeoBasics.CoordRefSystems
     using GeoBasics.Meshes: 𝔼, Point, Box, PolyArea, Multi
     using GeoBasics.CoordRefSystems: LatLon, Cartesian, WGS84Latest
@@ -89,6 +89,11 @@ end
 
     b = GeoBorders(p)
     @test_logs (:warn, r"ignored") GeoBorders(b; fix_antimeridian_crossing = true)
+
+    # We test that the POLYAREAS_NOWARN can be used to suppress warnings as well
+    BasicTypes.with(POLYAREAS_NOWARN => true) do
+        @test_logs polyareas(LatLon, p)
+    end
 end
 
 @testitem "show" setup=[setup_basic] begin

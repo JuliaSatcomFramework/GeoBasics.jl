@@ -1,6 +1,6 @@
 module GeoBasics
 
-using BasicTypes: BasicTypes, valuetype, getproperty_oftype, @fallback, NotProvided, common_valuetype, Optional
+using BasicTypes: BasicTypes, valuetype, getproperty_oftype, @fallback, NotProvided, common_valuetype, Optional, ScopedRefValue
 using CoordRefSystems: CoordRefSystems, LatLon, Cartesian2D, WGS84Latest, Deg, Met, Cartesian
 using Meshes: Meshes, Geometry, CRS, 🌐, Multi, 𝔼, Point, MultiPolygon, Ring, PolyArea, Box, GeometrySet, SubDomain, Domain, OrientationType, CW, CCW
 using Meshes: boundingbox, rings, vertices, orientation, crs, segments, vertex
@@ -11,6 +11,8 @@ using Unitful: Unitful, ustrip, @u_str
 # Exports from dependencies
 export LatLon, Cartesian # From CoordRefSystems.jl
 export @u_str # From Unitful.jl
+
+include("constants.jl")
 
 include("types.jl")
 export FastInGeometry, FastInDomain, GeoBorders

@@ -242,12 +242,12 @@ to_gset(crs::VALID_CRS) = Base.Fix1(to_gset, crs)
 Methods for polyareas for types from Meshes. This are mostly used for the construction of GeoBorders objects
 =#
 warn_internal_polyareas() = @warn "The `polyareas` function for `Multi`, `PolyArea` and `Box` objects is considered internal. You can suppress this warning by calling the function with the `nowarn` keyword argument set to true." maxlog = 1
-function polyareas(T::VALID_CRS, m::VALID_MULTI; nowarn = false)
+function polyareas(T::VALID_CRS, m::VALID_MULTI; nowarn = POLYAREAS_NOWARN[])
     nowarn || warn_internal_polyareas()
     f = T === LatLon ? latlon_geometry : cartesian_geometry
     Iterators.map(f, parent(m))
 end
-function polyareas(T::VALID_CRS, b::VALID_BOX; nowarn = false)
+function polyareas(T::VALID_CRS, b::VALID_BOX; nowarn = POLYAREAS_NOWARN[])
     nowarn || warn_internal_polyareas()
 	lo, hi = extrema(b) .|> to_raw_lonlat
     lo_lon, lo_lat = lo
@@ -263,7 +263,7 @@ function polyareas(T::VALID_CRS, b::VALID_BOX; nowarn = false)
     )) |> PolyArea
     return (p, )
 end
-function polyareas(T::VALID_CRS, p::VALID_POLY; nowarn = false)
+function polyareas(T::VALID_CRS, p::VALID_POLY; nowarn = POLYAREAS_NOWARN[])
     nowarn || warn_internal_polyareas()
     f = T === LatLon ? latlon_geometry : cartesian_geometry
     Iterators.map(f, (p, ))
