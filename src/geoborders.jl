@@ -76,7 +76,8 @@ GeoBorders{T}(geometry::Geometry; fix_antimeridian_crossing::Optional{Bool} = No
 GeoBorders{T}(dmn::Domain; fix_antimeridian_crossing::Optional{Bool} = NotProvided()) where T <: AbstractFloat = GeoBorders{T}(collect(dmn); fix_antimeridian_crossing)
 GeoBorders(obj::Union{Geometry, Domain}; fix_antimeridian_crossing::Optional{Bool} = NotProvided()) = GeoBorders{common_valuetype(AbstractFloat, Float32, obj)}(obj; fix_antimeridian_crossing)
 # No op
-GeoBorders{T}(gb::GeoBorders{T}) where T = gb
+GeoBorders{T}(gb::GeoBorders{T}) where T <: AbstractFloat = gb
+GeoBorders(gb::GeoBorders) = gb
 
 
 

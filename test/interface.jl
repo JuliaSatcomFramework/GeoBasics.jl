@@ -175,6 +175,16 @@ end
     dgb = GeoBorders(dmn)
 
     @test polyareas(LatLon, dgb) == mapreduce(polyareas(LatLon), vcat, dmn)
+
+    # We test the no-op constructor
+    sgb = geoborders(sg)
+    @test GeoBorders{valuetype(sgb)}(sgb) === sgb
+    @test GeoBorders(sgb) === sgb
+
+    # We test equality with ==
+    sgb_copy = deepcopy(sgb)
+    @test sgb !== sgb_copy
+    @test sgb == sgb_copy
 end
 
 @testitem "remove duplicate polyareas" setup=[setup_geoborders] begin
@@ -243,4 +253,9 @@ end
 
     # We test that all original polygons are present in the cartesian geoemtry set
     @test all(poly -> poly in cart_gset, polys)
+
+    # We test equality with domains
+    dmn_copy = deepcopy(dmn)
+    @test dmn == dmn_copy
+    @test dmn !== dmn_copy
 end

@@ -34,3 +34,9 @@ function Base.deleteat!(gb::GeoBorders, inds)
     end
     return gb
 end
+
+function Base.:(==)(g1::FastInGeometry, g2::FastInGeometry)
+    return all(zip(polyareas(LatLon, g1), polyareas(LatLon, g2))) do (p1, p2)
+        p1 == p2
+    end
+end
