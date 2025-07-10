@@ -20,7 +20,7 @@ end
 function has_antimeridian(ring::VALID_RING)
     any(segments(ring)) do segment
         p1, p2 = extrema(segment)
-        abs(get_lon(p1) - get_lon(p2)) > 180
+        abs(get_raw_lon(p1) - get_raw_lon(p2)) > 180
     end
 end
 
@@ -31,7 +31,7 @@ function split_antimeridian(ring::RING_CART{T}, o = orientation(ring)) where T <
     function P(lon, lat)
         to_cartesian_point(T, (lon, lat))
     end
-    δlon(p1, p2) = get_lon(p2) - get_lon(p1)
+    δlon(p1, p2) = get_raw_lon(p2) - get_raw_lon(p1)
     for s in segments(ring)
         p1, p2 = extrema(s)
         push!(seg, p1)
@@ -66,12 +66,12 @@ function join_segments!(segs::Vector{Vector{POINT_CART{T}}}) where T <: Abstract
         tstart, tend = first(target), last(target)
         cstart, cend = first(candidate), last(candidate)
         # If the candidate does not have the same lognitude sign we ignore this candidate
-        sign(get_lon(tstart)) == sign(get_lon(cstart)) || return false
-        target_Δlat = get_lat(tend) - get_lat(tstart)
-        candidate_Δlat = get_lat(cend) - get_lat(cstart)
+        sign(get_raw_lon(tstart)) == sign(get_raw_lon(cstart)) || return false
+        target_Δlat = get_raw_lat(tend) - get_raw_lat(tstart)
+        candidate_Δlat = get_raw_lat(cend) - get_raw_lat(cstart)
         # For the candidate to be eligible for inclusion, it must have Δlat which has opposite sign than the target and lower absolute value
         sign(target_Δlat) == -sign(candidate_Δlat) || return 0
-        start_Δlat = get_lat(tstart) - get_lat(cstart)
+        start_Δlat = get_raw_lat(tstart) - get_raw_lat(cstart)
         # We still have to check whether one segment is inside the bounds of the other
         if abs(target_Δlat) > abs(candidate_Δlat)
             abs(start_Δlat) < abs(target_Δlat) ? 1 : 0

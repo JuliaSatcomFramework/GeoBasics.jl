@@ -44,7 +44,11 @@ end
     @test multi_cartesian |> latlon_geometry == multi_latlon
     @test multi_latlon |> cartesian_geometry == multi_cartesian
 
-    @test rand(LatLon) |> to_latlon_point isa POINT_LATLON{Float64}
+    ll = rand(LatLon)
+    p = to_point(LatLon, ll)
+    @test p isa POINT_LATLON{Float64}
+    @test get_lon(p) == get_raw_lon(ll) * °
+    @test get_lat(p) == get_raw_lat(ll) * °
 end
 
 @testitem "to_xxx_point" setup=[setup_basic] begin

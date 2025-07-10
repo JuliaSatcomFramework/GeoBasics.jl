@@ -1,6 +1,6 @@
 module GeoBasics
 
-using BasicTypes: BasicTypes, valuetype, getproperty_oftype, @fallback, NotProvided, common_valuetype, Optional, ScopedRefValue
+using BasicTypes: BasicTypes, valuetype, getproperty_oftype, @fallback, NotProvided, common_valuetype, Optional, ScopedRefValue, enforce_unit
 using CoordRefSystems: CoordRefSystems, LatLon, Cartesian2D, WGS84Latest, Deg, Met, Cartesian
 using Meshes: Meshes, Geometry, CRS, 🌐, Multi, 𝔼, Point, MultiPolygon, Ring, PolyArea, Box, GeometrySet, SubDomain, Domain, OrientationType, CW, CCW
 using Meshes: boundingbox, rings, vertices, orientation, crs, segments, vertex
@@ -25,7 +25,7 @@ export polyareas, bboxes, geoborders
 include("deps_interface.jl")
 
 include("helpers.jl")
-export to_cartesian_point, to_latlon_point, to_point, to_multi, to_gset, get_lon, get_lat
+export to_cartesian_point, to_latlon_point, to_point, to_multi, to_gset, get_raw_lon, get_raw_lat, get_lon, get_lat
 
 include("antimeridian.jl")
 

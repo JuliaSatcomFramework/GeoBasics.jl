@@ -1,27 +1,51 @@
 # These return just the longitude or the latitude without a unit
 """
-    get_lon(p)
+    get_raw_lon(p)
 
 Extracts the longitude from a point `p` and returns it expressed in degrees and without a unit.
 
 !!! note
     This function exploits `GeoPlottingHelpers.to_row_lonlat` internally so any object that has a valid method for `to_row_lonlat` will work as input.
 
-See also [`get_lat`](@ref).
+See also [`get_raw_lat`](@ref).
 """
-get_lon(p) = first(to_raw_lonlat(p))
+get_raw_lon(p) = first(to_raw_lonlat(p))
 
 """
-    get_lat(p)
+    get_raw_lat(p)
 
 Extracts the latitude from a point `p` and returns it expressed in degrees and without a unit.
 
 !!! note
     This function exploits `GeoPlottingHelpers.to_row_lonlat` internally so any object that has a valid method for `to_row_lonlat` will work as input.
 
-See also [`get_lon`](@ref).
+See also [`get_raw_lon`](@ref).
 """
-get_lat(p) = last(to_raw_lonlat(p))
+get_raw_lat(p) = last(to_raw_lonlat(p))
+
+"""
+    get_lon(p)
+
+Extracts the longitude from a point `p` and returns it expressed in degrees and with the unit `°`.
+
+!!! note
+    This function exploits `GeoPlottingHelpers.to_row_lonlat` internally so any object that has a valid method for `to_row_lonlat` will work as input.
+
+See also [`get_raw_lon`](@ref), [`get_lat`](@ref).
+"""
+get_lon(p) = enforce_unit(u"°", get_raw_lon(p))
+
+"""
+    get_lat(p)
+
+Extracts the latitude from a point `p` and returns it expressed in degrees and with the unit `°`.
+
+!!! note
+    This function exploits `GeoPlottingHelpers.to_row_lonlat` internally so any object that has a valid method for `to_row_lonlat` will work as input.
+
+See also [`get_raw_lat`](@ref), [`get_lon`](@ref).
+"""
+get_lat(p) = enforce_unit(u"°", get_raw_lat(p))
 
 """
     to_cartesian_point(T::Type{<:AbstractFloat}, obj)
