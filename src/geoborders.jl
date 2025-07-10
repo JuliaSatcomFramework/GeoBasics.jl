@@ -95,8 +95,8 @@ Having a valid method of this function for custom geometries is sufficient to sa
 
 See also [`polyareas`](@ref), [`bboxes`](@ref), [`FastInGeometry`](@ref), [`to_multi`](@ref).
 """
-function geoborders(geom; exception = NotProvided())  
-    exception = @fallback exception ArgumentError("No field of type `GeoBorders` was found in the provided input.\nYou need to define a custom method for the `geoborders` function.")
+function geoborders(geom)  
+    exception = ArgumentError("No field of type `GeoBorders` was found in the provided input geometry.\nYou need to define a custom method for the `geoborders` function that returns a `GeoBorders` instance.")
     getproperty_oftype(geom, GeoBorders; exception)::GeoBorders
 end
 

@@ -65,7 +65,6 @@ for nm in (:polyareas, :bboxes)
     @eval $nm(T::VALID_CRS) = Base.Fix1($nm, T)
     # Version which tries to extract the `GeoBorders` field from the input
     @eval function $nm(T::VALID_CRS, x) 
-        exception = ArgumentError($(string("The `GeoBorders` connected to the input could not be automatically extracted.\nConsider adding a custom method for `geoborders` or more explicitly for the called `", nm, "` function.")))
-        return $nm(T, geoborders(x; exception))
+        return $nm(T, geoborders(x))
     end
 end

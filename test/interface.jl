@@ -1,4 +1,4 @@
-@testsnippet setup_geoborders begin
+@testsnippet setup_interface begin
     using GeoBasics
     using GeoBasics: VALID_CRS, VALID_MULTI, VALID_POLY, VALID_BOX, POLY_LATLON, POLY_CART, BOX_LATLON, BOX_CART
     using GeoBasics.Meshes
@@ -9,7 +9,7 @@
     using TestAllocations
 end
 
-@testitem "GeoBorders antimeridian/orientation" setup=[setup_geoborders] begin
+@testitem "GeoBorders antimeridian/orientation" setup=[setup_interface] begin
     # We create a complex polygon that has a reversed S shape crossing the antimeridian in multiple places
     complex_s_poly = let
         f = Base.Fix1(to_cartesian_point, Float64)
@@ -90,7 +90,7 @@ end
     @test has_correct_orientation(without_split)
 end
 
-@testitem "FastInGeometry interface" setup=[setup_geoborders] begin
+@testitem "FastInGeometry interface" setup=[setup_interface] begin
     # We try implementing a type supporting the `FastInGeometry` interface in the simplest way possible, by having a field of type `GeoBorders`
 
     struct SimpleGeometry <: FastInGeometry{Float64}
@@ -187,7 +187,7 @@ end
     @test sgb == sgb_copy
 end
 
-@testitem "remove duplicate polyareas" setup=[setup_geoborders] begin
+@testitem "remove duplicate polyareas" setup=[setup_interface] begin
     f = to_latlon_point(Float64)
 
     simple_box = Box(f((0,0)), f((10,10)))
@@ -200,7 +200,7 @@ end
     @test length(polyareas(LatLon, gb)) == 2
 end
 
-@testitem "FastInDomain" setup=[setup_geoborders] begin
+@testitem "FastInDomain" setup=[setup_interface] begin
     # We try to a custom domain with a custom FastInGeometry type
     struct SimpleGeometry <: FastInGeometry{Float64}
         name::String
@@ -258,4 +258,22 @@ end
     dmn_copy = deepcopy(dmn)
     @test dmn == dmn_copy
     @test dmn !== dmn_copy
+end
+
+@testitem "geoborders" setup=[setup_interface] begin
+    # We test that the `geoborders` overload works for custom types which do not work with the default definition of `geoborders`
+    
+    struct CustomGeometry <: FastInGeometry{Float64}
+        other::GeoBorders{Float64}
+        borders::GeoBorders{Float64}
+    end
+
+    GeoBasics.geoborders(cg::CustomGeometry) = cg.borders
+
+    other = GeoBorders{Float64}(rand(PolyArea; crs = LatLon))
+    borders = GeoBorders{Float64}(rand(PolyArea; crs = LatLon))
+    cg = CustomGeometry(other, borders)
+
+    @test geoborders(cg) === borders
+    @test polyareas(LatLon, cg) == polyareas(LatLon, borders)
 end
