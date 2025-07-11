@@ -70,6 +70,13 @@ end
 
     @test LL(20, 10) |> to_latlon_point(Float32) === Point(LatLon(20f0, 10f0))
     @test LL(20, 10) |> to_cartesian_point(Float32) === Point(Cartesian2D{WGS84Latest}(10f0, 20f0))
+
+    # We check that we also support NamedTuples as inputs and valuetype is extracted correctly
+    pf32 = to_point(LatLon, (lat = 20, lon = 10))
+    @test pf32 === Point(LatLon(20f0, 10f0)) && pf32 isa POINT_LATLON{Float32}
+
+    pf64 = to_point(LatLon, (lat = 20.0, lon = 10u"°"))
+    @test pf64 === Point(LatLon(20.0, 10.0)) && pf64 isa POINT_LATLON{Float64}
 end
 
 @testitem "to_multi" setup=[setup_basic] begin
