@@ -125,7 +125,9 @@ for name in (:to_cartesian_point, :to_latlon_point)
     @eval $name(T::Type{<:AbstractFloat}) = Base.Fix1($name, T)
     @eval $name(x) = $name(common_valuetype(AbstractFloat, Float32, x), x)
     # Methods for tuple which extract the valuetype from the input
-    @eval $name(tp::Tuple{Number, Number}) = $name(common_valuetype(AbstractFloat, Float32, tp...), tp)
+    VALID_TUP = Tuple{Number, Number}
+    VALID_INP = Union{VALID_TUP, GeoPlottingHelpers._LONLAT_NT{VALID_TUP}}
+    @eval $name(tp::$VALID_INP) = $name(common_valuetype(AbstractFloat, Float32, tp...), tp)
 end
 
 """
