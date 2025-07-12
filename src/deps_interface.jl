@@ -2,6 +2,8 @@ GeoPlottingHelpers.geom_iterable(geom::FastInGeometry) = polyareas(LatLon, geom)
 
 ### We explicitly avoid implementing the Meshes interface for FastInGeometry objects here to encourage users to explicitly decide whether to use the LatLon or Cartesian CRS both available in the underlying geometry.
 
+Meshes.paramdim(geom::FastInGeometry) = 2
+
 
 ### Base methods ###
 """

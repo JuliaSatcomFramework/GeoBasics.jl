@@ -7,5 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.0.1] - 2025-07-11
+### Added
+Added a method for `Meshes.paramdim` for `FastInGeometry` objects. This is mostly for supporting calls to `GeoTable` with a domain made of `FastInGeometry`s
+
 ## [1.0.0] - 2025-07-11
 Initial Version
