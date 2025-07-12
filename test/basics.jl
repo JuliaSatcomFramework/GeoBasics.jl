@@ -66,7 +66,6 @@ end
         lon::Float64
     end
     GeoPlottingHelpers.to_raw_lonlat(ll::LL) = (ll.lon, ll.lat)
-    BasicTypes.valuetype(::LL) = Float64
 
     @test LL(20, 10) |> to_latlon_point(Float32) === Point(LatLon(20f0, 10f0))
     @test LL(20, 10) |> to_cartesian_point(Float32) === Point(Cartesian2D{WGS84Latest}(10f0, 20f0))
