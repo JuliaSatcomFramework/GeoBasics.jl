@@ -26,6 +26,10 @@ end
 
     # We test that the total length has not changed (if not by minor rounding errors)
     @test length(onlyring(poly_gb)) ≈ length(onlyring(resampled)) atol = 1u"m"
+    # We also test that all original points are still present in the resampled polygon
+    @test all(eachvertex(onlyring(poly_gb))) do v
+        v in eachvertex(onlyring(resampled))
+    end
 
     # we first test that the starting points are more than 2km apart
     @test all(>(2u"km"), seglengths(poly_gb))
