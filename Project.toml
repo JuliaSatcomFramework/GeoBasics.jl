@@ -1,6 +1,6 @@
 name = "GeoBasics"
 uuid = "8fb48e0b-3c9c-4361-9123-9e8e6ea58083"
-version = "1.0.2"
+version = "1.1.0"
 authors = ["Alberto Mengali <disberd@gmail.com>"]
 
 [deps]
