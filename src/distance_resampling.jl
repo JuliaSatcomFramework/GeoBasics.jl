@@ -4,9 +4,13 @@ function distance_resample(r::RING_LATLON, target_dist)
     resampled = PT[] # This will hold the new points of the ring sampled to achieve approximately the desired distance
     for s in segments(r)
         normalized_step = target_dist / length(s)
-        parametric_range = range(0, 1; step=normalized_step)
-        for p in parametric_range
-            push!(resampled, s(p))
+        if normalized_step < 1
+            parametric_range = range(0, 1; step=normalized_step)
+            for p in parametric_range
+                push!(resampled, s(p))
+            end
+        else
+            push!(resampled, s(0))
         end
     end
     return Ring(resampled)

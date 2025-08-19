@@ -39,4 +39,10 @@ end
     # Finally we test that also the cartesian polygon was updated. We do so by converting the cartesian to latlon and then measure again the segment lengths (because length of the segments in cartesian loses the length on the actual earth's surface)
     cartesian_candidate = onlypoly(resampled, Cartesian)
     @test all(<(2.0001u"km"), seglengths(latlon_geometry(cartesian_candidate)))
+
+    # Now we test that if the distance is greater than the actual length of each segment the polygon is not changed
+    target_dist = 2 * maximum(seglengths(poly_gb))
+    not_resampled = distance_resample(poly_gb, target_dist)
+
+    @test onlyring(poly_gb) == onlyring(not_resampled)
 end
