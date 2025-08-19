@@ -5,7 +5,7 @@
     using GeoBasics.GeoPlottingHelpers
     using GeoBasics.BasicTypes: BasicTypes, valuetype, with
     using GeoBasics.CoordRefSystems
-    using GeoBasics.Meshes: 𝔼, Point, Box, PolyArea, Multi
+    using GeoBasics.Meshes: 𝔼, Point, Box, PolyArea, Multi, paramdim
     using GeoBasics.CoordRefSystems: LatLon, Cartesian, WGS84Latest
     using GeoBasics.Unitful: Unitful, °, @u_str
     using TestAllocations
@@ -120,7 +120,7 @@ end
 
     gb = GeoBorders{Float64}(rand(PolyArea, 10; crs = LatLon))
 
-    @test Meshes.paramdim(gb) == 2
+    @test paramdim(gb) == 2
 
     @test GeoPlottingHelpers.geom_iterable(gb) == polyareas(LatLon, gb)
 
