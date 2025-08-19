@@ -120,6 +120,8 @@ end
 
     gb = GeoBorders{Float64}(rand(PolyArea, 10; crs = LatLon))
 
+    @test Meshes.paramdim(gb) == 2
+
     @test GeoPlottingHelpers.geom_iterable(gb) == polyareas(LatLon, gb)
 
     ## Base methods

@@ -33,4 +33,7 @@ include("point_inclusion.jl")
 
 include("show.jl")
 
+include("distance_resampling.jl")
+export distance_resample, distance_resample!
+
 end # module GeoBasics
