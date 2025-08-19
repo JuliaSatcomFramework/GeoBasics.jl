@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.1.0] - 2025-08-19
+### Added
+- Added the `distance_resample` function (and its mutating version `distance_resample!`) for resampling the polygons in a `GeoBorders` instance so that the segments of each ring of the GeoBorder's `polyareas` are not longer than a given distance `target_dist`.
+  - Useful for _oversampling_ a GeoBorders to increase the point density along its borders.
+
 ## [1.0.2] - 2025-07-11
 
 ### Fixed
