@@ -1,6 +1,6 @@
 name = "GeoBasics"
 uuid = "8fb48e0b-3c9c-4361-9123-9e8e6ea58083"
-version = "1.1.1"
+version = "1.2.0"
 authors = ["Alberto Mengali <disberd@gmail.com>"]
 
 [deps]
@@ -12,7 +12,7 @@ Meshes = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
-BasicTypes = "1.14.0"
+BasicTypes = "1.14.0, 2"
 CircularArrays = "1"
 CoordRefSystems = "0.16 - 0.19"
 GeoPlottingHelpers = "0.1.4"
