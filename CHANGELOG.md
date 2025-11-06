@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.2.0] - 2025-11-06
+
+### Changed
+- Updated compat to include `BasicTypes.jl@v2`
+- GeoBasics now uses the built-in scoped values introduced in Julia 1.11.
+- ⚠️ If you are using `BasicTypes.with`, this needs to be changed to `with` from `Base.ScopedValues`
+
 ## [1.1.1] - 2025-10-06
 ### Changed
 - Updated the compat to include the latest version of `CoordRefSystems.jl` (0.19.0)

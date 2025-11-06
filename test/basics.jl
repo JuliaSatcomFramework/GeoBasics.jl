@@ -3,7 +3,7 @@
     using GeoBasics: POINT_LATLON, POLY_LATLON, POLY_CART, BOX_LATLON, BOX_CART, POINT_CART, POLYAREAS_NOWARN
     using GeoBasics: cartesian_geometry, latlon_geometry, to_latlon_point, to_cartesian_point
     using GeoBasics.GeoPlottingHelpers
-    using GeoBasics.BasicTypes: BasicTypes, valuetype, with
+    using GeoBasics.BasicTypes: BasicTypes, valuetype
     using GeoBasics.CoordRefSystems
     using GeoBasics.Meshes: 𝔼, Point, Box, PolyArea, Multi, paramdim
     using GeoBasics.CoordRefSystems: LatLon, Cartesian, WGS84Latest
@@ -90,6 +90,8 @@ end
 end
 
 @testitem "warnings" setup=[setup_basic] begin
+    using Base.ScopedValues
+
     p = rand(PolyArea; crs = LatLon)
     @test_logs (:warn, r"internal") polyareas(LatLon, p)
     # We test that it doesn't warn with the nowarn keyword
@@ -101,7 +103,7 @@ end
     @test_logs (:warn, r"ignored") GeoBorders(b; fix_antimeridian_crossing = true)
 
     # We test that the POLYAREAS_NOWARN can be used to suppress warnings as well
-    BasicTypes.with(POLYAREAS_NOWARN => true) do
+    with(POLYAREAS_NOWARN => true) do
         @test_logs polyareas(LatLon, p)
     end
 end

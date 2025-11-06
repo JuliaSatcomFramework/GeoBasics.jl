@@ -1,6 +1,7 @@
 module GeoBasics
 
-using BasicTypes: BasicTypes, valuetype, getproperty_oftype, @fallback, NotProvided, common_valuetype, Optional, ScopedRefValue, enforce_unit
+using BasicTypes: BasicTypes, valuetype, getproperty_oftype, @fallback, NotProvided, common_valuetype, Optional, enforce_unit
+using Base.ScopedValues: ScopedValue
 using CoordRefSystems: CoordRefSystems, LatLon, Cartesian2D, WGS84Latest, Deg, Met, Cartesian
 using Meshes: Meshes, Geometry, CRS, 🌐, Multi, 𝔼, Point, MultiPolygon, Ring, PolyArea, Box, GeometrySet, SubDomain, Domain, OrientationType, CW, CCW
 using Meshes: boundingbox, rings, vertices, orientation, crs, segments, vertex

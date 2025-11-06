@@ -33,7 +33,7 @@ Extracts the longitude from a point `p` and returns it expressed in degrees and 
 
 See also [`get_raw_lon`](@ref), [`get_lat`](@ref).
 """
-get_lon(p) = enforce_unit(u"°", get_raw_lon(p))
+get_lon(p) = enforce_unit(u"°", get_raw_lon(p), u"°")
 
 """
     get_lat(p)
@@ -45,7 +45,7 @@ Extracts the latitude from a point `p` and returns it expressed in degrees and w
 
 See also [`get_raw_lat`](@ref), [`get_lon`](@ref).
 """
-get_lat(p) = enforce_unit(u"°", get_raw_lat(p))
+get_lat(p) = enforce_unit(u"°", get_raw_lat(p), u"°")
 
 """
     to_cartesian_point(T::Type{<:AbstractFloat}, obj)
