@@ -12,7 +12,7 @@ Meshes = "eacbb407-ea5a-433e-ab97-5258b1ca43fa"
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [compat]
-BasicTypes = "1.14.0, 2"
+BasicTypes = "2"
 CircularArrays = "1"
 CoordRefSystems = "0.16 - 0.19"
 GeoPlottingHelpers = "0.1.4"
