@@ -24,6 +24,29 @@ function has_antimeridian(ring::VALID_RING)
     end
 end
 
+# Checks if a ring contains the north or south pole by computing the total signed longitude
+# traversal (with antimeridian crossings corrected to the range [-180, 180]).
+# Returns :north (total ≈ +360°), :south (total ≈ -360°), or :none.
+function contained_pole(ring::RING_CART)
+    total_Δlon = sum(segments(ring)) do s
+        p1, p2 = extrema(s)
+        Δlon = get_raw_lon(p2) - get_raw_lon(p1)
+        if Δlon > 180
+            Δlon -= 360
+        elseif Δlon < -180
+            Δlon += 360
+        end
+        Δlon
+    end
+    if isapprox(total_Δlon, 360; atol = 1)
+        return :north
+    elseif isapprox(total_Δlon, -360; atol = 1)
+        return :south
+    else
+        return :none
+    end
+end
+
 function split_antimeridian(ring::RING_CART{T}, o = orientation(ring)) where T <: AbstractFloat
     ptype = POINT_CART{T}
     segs = Vector{ptype}[]
@@ -54,6 +77,29 @@ function split_antimeridian(ring::RING_CART{T}, o = orientation(ring)) where T <
     else
         # This is slightly different from the python library implementation, but I am not sure what is the python library doing there
         prepend!(first(segs), seg)
+    end
+    # Handle pole containment: if the ring contains a pole, add two pole-proximity points to
+    # the segment that spans both sides of the antimeridian, closing it around the pole.
+    # See https://www.gadom.ski/antimeridian/v0.4.2/the-algorithm/#the-poles
+    pole = contained_pole(ring)
+    if pole !== :none
+        pole_lat = T(pole === :north ? 90 : -90)
+        # The pole segment is the one whose first and last points lie on opposite sides of the
+        # antimeridian (one at -180° and one at +180°). Multiplying the two longitudes gives a
+        # negative value only when they have opposite (non-zero) signs, which avoids any
+        # ambiguity from sign(0) == 0.
+        pole_seg_idx = findfirst(segs) do s
+            get_raw_lon(first(s)) * get_raw_lon(last(s)) < 0
+        end
+        if !isnothing(pole_seg_idx)
+            last_lon = T(get_raw_lon(last(segs[pole_seg_idx])))
+            # Walk up the antimeridian on the ending side to the pole, then across to the other side.
+            push!(segs[pole_seg_idx], P(last_lon, pole_lat))
+            push!(segs[pole_seg_idx], P(-last_lon, pole_lat))
+        end
+        # After adding pole points every segment is a self-contained standalone polygon;
+        # join_segments! is not needed (and would incorrectly merge sub-polygons).
+        return map(r -> force_orientation(o, Ring(r)), segs)
     end
     # We always force rings to have the desired orientation
     return map(r -> force_orientation(o, Ring(r)), join_segments!(segs))
