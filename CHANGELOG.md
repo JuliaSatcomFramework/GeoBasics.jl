@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated the compat to include the latest versions of `Meshes.jl` (0.56/0.57).
 
+## [1.2.1] - 2025-11-11
+### Removed
+- Dropped support for `BasicTypes.jl` v1; the package now requires `BasicTypes.jl` v2.
+
 ## [1.2.0] - 2025-11-06
 
 ### Changed
