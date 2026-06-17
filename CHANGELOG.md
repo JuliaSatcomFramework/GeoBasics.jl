@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.2.2] - 2026-06-17
+### Fixed
+- Point-in-polygon checks now return correct results for polygons that contain a pole (e.g. polar caps crossing the antimeridian). Such polygons are degenerate in the flat `(lon, lat)` projection used internally, so points near the pole inside the cap were previously reported as outside.
+
+### Changed
+- Updated the compat to include the latest versions of `Meshes.jl` (0.56/0.57).
+
 ## [1.2.0] - 2025-11-06
 
 ### Changed
