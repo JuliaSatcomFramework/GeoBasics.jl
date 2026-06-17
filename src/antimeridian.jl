@@ -3,6 +3,18 @@ This file contains functions to identify and eventually split rings of polyareas
 The code is inspired by the implementation in the python library at https://github.com/gadomski/antimeridian, though it's simplified to only work on a subset of cases for the moment
 =#
 
+# Returns the two endpoints of a segment in traversal order (first vertex, then second).
+# The antimeridian code below relies on this ordering to compute the *signed* longitude
+# difference along each segment. Meshes' `extrema(::Segment)` happens to return the
+# endpoints in this order, but that is not guaranteed across Meshes versions: the generic
+# `extrema(::Geometry)` falls back to the bounding-box corners, which are sorted and would
+# silently drop the traversal direction. We therefore extract the endpoints explicitly via
+# the public `vertices` accessor to stay robust as the Meshes compat bounds are widened.
+# Restricted to `Segment` on purpose: `vertices` is defined for many geometries, so an
+# untyped method would silently return a meaningless pair (e.g. the first/last vertex of a
+# whole ring) instead of erroring on misuse.
+segment_endpoints(s::Segment) = (first(vertices(s)), last(vertices(s)))
+
 # Force a specific orientation to a ring
 force_orientation(o::OrientationType, r::VALID_RING) = orientation(r) == o ? r : reverse(r)
 
@@ -19,7 +31,7 @@ end
 # Checks if a ring has an antimeridian crossing. This assumes that any segment spanning more than 180° in longitude is crossing the antimeridian
 function has_antimeridian(ring::VALID_RING)
     any(segments(ring)) do segment
-        p1, p2 = extrema(segment)
+        p1, p2 = segment_endpoints(segment)
         abs(get_raw_lon(p1) - get_raw_lon(p2)) > 180
     end
 end
@@ -29,7 +41,7 @@ end
 # Returns :north (total ≈ +360°), :south (total ≈ -360°), or :none.
 function contained_pole(ring::RING_CART)
     total_Δlon = sum(segments(ring)) do s
-        p1, p2 = extrema(s)
+        p1, p2 = segment_endpoints(s)
         Δlon = get_raw_lon(p2) - get_raw_lon(p1)
         if Δlon > 180
             Δlon -= 360
@@ -56,7 +68,7 @@ function split_antimeridian(ring::RING_CART{T}, o = orientation(ring)) where T <
     end
     δlon(p1, p2) = get_raw_lon(p2) - get_raw_lon(p1)
     for s in segments(ring)
-        p1, p2 = extrema(s)
+        p1, p2 = segment_endpoints(s)
         push!(seg, p1)
         Δlon = δlon(p1, p2)
         if 180 < Δlon < 360 # Crossing from West hemisphere to East hemisphere
