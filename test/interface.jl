@@ -90,6 +90,38 @@ end
     @test has_correct_orientation(without_split)
 end
 
+@testitem "Polygon containing pole" setup=[setup_interface] begin
+    f = Base.Fix1(to_cartesian_point, Float64)
+
+    # A cap polygon at 60°N that crosses the antimeridian.
+    # The segment (170,60)->(-90,60) has Dlon = -260, corrected = +100.
+    # Total corrected Dlon = 90 + 80 + 100 + 90 = +360 -> contains the north pole.
+    north_cap = map(f, [(0., 60.), (90., 60.), (170., 60.), (-90., 60.)]) |> Ring |> PolyArea
+
+    gb_north = GeoBorders(north_cap)
+
+    # Points above 60°N (inside the cap) must be inside
+    @test in(LatLon(80., 0.), gb_north)   # near north pole
+    @test in(LatLon(70., 0.), gb_north)   # well inside the cap
+    # Points below 60°N must be outside
+    @test !in(LatLon(50., 0.), gb_north)  # just south of the cap boundary
+    @test !in(LatLon(0., 0.), gb_north)   # equator
+
+    # A cap polygon at 60°S that crosses the antimeridian.
+    # The segment (-90,-60)->(170,-60) has Dlon = +260, corrected = -100.
+    # Total corrected Dlon = -90 - 100 - 80 - 90 = -360 -> contains the south pole.
+    south_cap = map(f, [(0., -60.), (-90., -60.), (170., -60.), (90., -60.)]) |> Ring |> PolyArea
+
+    gb_south = GeoBorders(south_cap)
+
+    # Points below 60°S (inside the cap) must be inside
+    @test in(LatLon(-80., 0.), gb_south)  # near south pole
+    @test in(LatLon(-70., 0.), gb_south)  # well inside the cap
+    # Points above 60°S must be outside
+    @test !in(LatLon(-50., 0.), gb_south) # just north of the cap boundary
+    @test !in(LatLon(0., 0.), gb_south)   # equator
+end
+
 @testitem "FastInGeometry interface" setup=[setup_interface] begin
     # We try implementing a type supporting the `FastInGeometry` interface in the simplest way possible, by having a field of type `GeoBorders`
 
