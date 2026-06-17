@@ -19,3 +19,6 @@ GeoPlottingHelpers = "0.1.4"
 Meshes = "0.51 - 0.55"
 Unitful = "1"
 julia = "1.11"
+
+[workspace]
+projects = ["test"]
