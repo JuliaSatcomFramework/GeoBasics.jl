@@ -3,7 +3,7 @@ module GeoBasics
 using BasicTypes: BasicTypes, valuetype, getproperty_oftype, @fallback, NotProvided, common_valuetype, Optional, enforce_unit
 using Base.ScopedValues: ScopedValue
 using CoordRefSystems: CoordRefSystems, LatLon, Cartesian2D, WGS84Latest, Deg, Met, Cartesian
-using Meshes: Meshes, Geometry, CRS, 🌐, Multi, 𝔼, Point, MultiPolygon, Ring, PolyArea, Box, GeometrySet, SubDomain, Domain, OrientationType, CW, CCW, Segment
+using Meshes: Meshes, Geometry, CRS, 🌐, Multi, 𝔼, Point, MultiPolygon, Ring, PolyArea, Box, GeometrySet, SubDomain, Domain, OrientationType, CW, CCW
 using Meshes: boundingbox, rings, vertices, orientation, crs, segments, vertex
 using CircularArrays: CircularArrays, CircularArray
 using GeoPlottingHelpers: GeoPlottingHelpers, with_settings, extract_latlon_coords, extract_latlon_coords!, geo_plotly_trace, to_raw_lonlat, geom_iterable, crossing_latitude_flat
