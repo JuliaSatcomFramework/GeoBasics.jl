@@ -16,7 +16,7 @@ BasicTypes = "2"
 CircularArrays = "1"
 CoordRefSystems = "0.16 - 0.19"
 GeoPlottingHelpers = "0.1.4"
-Meshes = "0.51 - 0.55"
+Meshes = "0.51 - 0.57"
 Unitful = "1"
 julia = "1.11"
 
