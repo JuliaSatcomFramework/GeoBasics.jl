@@ -122,6 +122,27 @@ end
     @test !in(LatLon(0., 0.), gb_south)   # equator
 end
 
+@testitem "Pole ring with un-splittable antimeridian segment" setup=[setup_interface] begin
+    f = Base.Fix1(to_cartesian_point, Float64)
+
+    # Regression test (was a v1.2.2 regression): a ring that encloses a pole but
+    # whose only antimeridian-crossing segment spans more than 360° of longitude
+    # because its endpoints fall outside [-180, 180] (e.g. a Clipper offset
+    # artifact, as produced by `offset_borders(GeoRegion(; admin="Antarctica"))`).
+    # Such a segment is flagged by `has_antimeridian` (|Δlon| > 180) but is NOT
+    # split (the splitter only handles 180 < |Δlon| < 360), so no segment ends up
+    # straddling ±180. Pole detection then has nothing to close around, which used
+    # to throw "a pole was detected ... but no antimeridian-crossing segment was
+    # found to close around it". It must now build without error.
+    #
+    # Longitudes 185≡-175 and -185≡175: the 185 -> -185 step has Δlon = -370.
+    pole_ring = map(f, [(185., 70.), (-185., 70.), (-60., 70.), (60., 70.)]) |> Ring |> PolyArea
+
+    gb = GeoBorders{Float64}(pole_ring)   # must not throw
+    @test gb isa GeoBorders{Float64}
+    @test !isempty(polyareas(LatLon, gb))
+end
+
 @testitem "FastInGeometry interface" setup=[setup_interface] begin
     # We try implementing a type supporting the `FastInGeometry` interface in the simplest way possible, by having a field of type `GeoBorders`
 

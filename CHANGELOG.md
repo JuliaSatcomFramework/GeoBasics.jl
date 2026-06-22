@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.2.3] - 2026-06-22
+### Fixed
+- Building `GeoBorders` no longer throws when a pole-containing ring has an antimeridian-crossing segment spanning more than 360° of longitude (i.e. with vertices whose longitude falls outside `[-180, 180]`, as produced by some polygon-offset routines). Such a segment is detected as crossing the antimeridian but cannot be split, so there is no segment to close around the pole; the constructor now falls back to the regular join path instead of erroring. Regression introduced in v1.2.2.
+
 ## [1.2.2] - 2026-06-17
 ### Fixed
 - Point-in-polygon checks now return correct results for polygons that contain a pole (e.g. polar caps crossing the antimeridian). Such polygons are degenerate in the flat `(lon, lat)` projection used internally, so points near the pole inside the cap were previously reported as outside.
