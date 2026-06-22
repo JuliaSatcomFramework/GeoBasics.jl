@@ -122,6 +122,58 @@ end
     @test !in(LatLon(0., 0.), gb_south)   # equator
 end
 
+@testitem "Pole ring with un-splittable antimeridian segment" setup=[setup_interface] begin
+    f = Base.Fix1(to_cartesian_point, Float64)
+
+    # Regression test (was a v1.2.2 regression): a ring that encloses a pole but
+    # whose only antimeridian-crossing segment spans more than 360° of longitude
+    # because its endpoints fall outside [-180, 180] (e.g. a Clipper offset
+    # artifact, as produced by `offset_borders(GeoRegion(; admin="Antarctica"))`).
+    # Such a segment is flagged by `has_antimeridian` (|Δlon| > 180) but is NOT
+    # split (the splitter only handles 180 < |Δlon| < 360), so no segment ends up
+    # straddling ±180. Pole detection then has nothing to close around, which used
+    # to throw "a pole was detected ... but no antimeridian-crossing segment was
+    # found to close around it". It must now build without error.
+    #
+    # Longitudes 185≡-175 and -185≡175: the 185 -> -185 step has Δlon = -370.
+    pole_ring = map(f, [(185., 70.), (-185., 70.), (-60., 70.), (60., 70.)]) |> Ring |> PolyArea
+
+    gb = GeoBorders{Float64}(pole_ring)   # must not throw
+    @test gb isa GeoBorders{Float64}
+    @test !isempty(polyareas(LatLon, gb))
+end
+
+@testitem "Pole detection respects ring orientation" setup=[setup_interface] begin
+    # Regression test (was a v1.2.2 regression): the contained pole is identified from the signed
+    # longitude winding, which is orientation-dependent, so it must be read on the ring brought to
+    # its canonical (CCW outer) orientation. Before the fix it was read on the raw input ring, so a
+    # source winding not following the GeoJSON convention (e.g. NaturalEarth rings, wound the other
+    # way) closed the cap around the WRONG pole and inverted the polygon (the contained pole fell
+    # outside, while the equator and the opposite pole fell inside).
+    #
+    # A constant-latitude circle around a pole is the sharpest case: its flat signed area is ≈ 0,
+    # so the planar `orientation` is unreliable and the canonical orientation must instead come from
+    # the (non-degenerate) signed spherical area. The circle encloses the pole on the side of its
+    # latitude regardless of which way it is wound, so both windings must give the same answer.
+    circle(latc, n; eastward) = begin
+        lons = collect(range(-180, 180, length = n + 1))[1:n]
+        eastward || (lons = reverse(lons))
+        map(lon -> to_cartesian_point(Float64, (lon, latc)), lons) |> Ring |> PolyArea
+    end
+
+    for eastward in (true, false)
+        south = GeoBorders{Float64}(circle(-70.0, 60; eastward))
+        @test in(LatLon(-85.0, 0.0), south)    # inside the south cap
+        @test !in(LatLon(0.0, 0.0), south)     # equator outside
+        @test !in(LatLon(85.0, 0.0), south)    # north pole outside
+
+        north = GeoBorders{Float64}(circle(70.0, 60; eastward))
+        @test in(LatLon(85.0, 0.0), north)     # inside the north cap
+        @test !in(LatLon(0.0, 0.0), north)     # equator outside
+        @test !in(LatLon(-85.0, 0.0), north)   # south pole outside
+    end
+end
+
 @testitem "FastInGeometry interface" setup=[setup_interface] begin
     # We try implementing a type supporting the `FastInGeometry` interface in the simplest way possible, by having a field of type `GeoBorders`
 

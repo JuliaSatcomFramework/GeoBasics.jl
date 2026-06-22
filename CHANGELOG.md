@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.3.0] - 2026-06-22
+### Fixed
+Two antimeridian/pole regressions introduced in v1.2.2, see [#6](https://github.com/JuliaSatcomFramework/GeoBasics.jl/pull/6) for details:
+- Building `GeoBorders` no longer errors on a pole-containing ring whose antimeridian crossing cannot be split (e.g. some polygon-offset artifacts).
+- The contained pole is now identified on the canonically-oriented ring, so rings not following the GeoJSON winding convention (e.g. NaturalEarth) are no longer closed around the wrong pole and inverted (as happened for Antarctica).
+
 ## [1.2.2] - 2026-06-17
 ### Fixed
 - Point-in-polygon checks now return correct results for polygons that contain a pole (e.g. polar caps crossing the antimeridian). Such polygons are degenerate in the flat `(lon, lat)` projection used internally, so points near the pole inside the cap were previously reported as outside.
