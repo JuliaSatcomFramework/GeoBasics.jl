@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [1.2.3] - 2026-06-22
+## [1.3.0] - 2026-06-22
 ### Fixed
-- Pole-containing rings whose source winding does not follow the GeoJSON convention (e.g. NaturalEarth polygons, which wind outer rings clockwise) are no longer closed around the wrong pole. Pole identity is derived from the signed longitude winding, which is orientation-dependent, and was being read from the raw input ring instead of the canonically-oriented one; this inverted polygons such as a buffered/raw Antarctica (the south pole was reported as outside, the equator and north pole as inside). The canonical orientation is now established from the signed *spherical* area, which (unlike the planar signed area used by `orientation`) is non-degenerate for pole-enclosing rings, so even a constant-latitude circle around a pole is handled correctly. Regression introduced in v1.2.2.
-- Building `GeoBorders` no longer throws when a pole-containing ring has an antimeridian-crossing segment spanning more than 360° of longitude (i.e. with vertices whose longitude falls outside `[-180, 180]`, as produced by some polygon-offset routines). Such a segment is detected as crossing the antimeridian but cannot be split, so there is no segment to close around the pole; the constructor now falls back to the regular join path instead of erroring. Regression introduced in v1.2.2.
+Two antimeridian/pole regressions introduced in v1.2.2, see [#6](https://github.com/JuliaSatcomFramework/GeoBasics.jl/pull/6) for details:
+- Building `GeoBorders` no longer errors on a pole-containing ring whose antimeridian crossing cannot be split (e.g. some polygon-offset artifacts).
+- The contained pole is now identified on the canonically-oriented ring, so rings not following the GeoJSON winding convention (e.g. NaturalEarth) are no longer closed around the wrong pole and inverted (as happened for Antarctica).
 
 ## [1.2.2] - 2026-06-17
 ### Fixed
