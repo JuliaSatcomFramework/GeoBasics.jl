@@ -47,6 +47,32 @@ function contained_pole(ring::RING_CART)
     end
 end
 
+# Sign of the signed spherical (geographic) area of a ring. Unlike the planar signed area used by
+# `orientation`, the spherical area is non-degenerate for rings that enclose a pole (a polar cap is
+# a thin band in the flat (lon, lat) plane, so its planar signed area is ≈ 0 and its `orientation`
+# is unreliable — yet these are exactly the rings for which we must identify the contained pole).
+# Uses the ∮ Δlon·(sin φ₁ + sin φ₂) line integral, with Δlon corrected across the antimeridian as
+# in `contained_pole`. A positive value corresponds to the CCW (outer-ring) orientation, i.e. the
+# enclosed region being the smaller cap.
+function spherical_area_sign(ring::RING_CART)
+    total = sum(segments(ring)) do s
+        p1, p2 = extrema(s)
+        Δlon = get_raw_lon(p2) - get_raw_lon(p1)
+        Δlon > 180 && (Δlon -= 360)
+        Δlon < -180 && (Δlon += 360)
+        Δlon * (sind(get_raw_lat(p1)) + sind(get_raw_lat(p2)))
+    end
+    sign(total)
+end
+
+# Brings `ring` to orientation `o`, deciding its current orientation from the signed spherical
+# area rather than the planar `orientation`. Equivalent to `force_orientation` for non-degenerate
+# rings, but correct for pole-enclosing ones where planar `orientation` is unreliable.
+function force_orientation_spherical(o::OrientationType, ring::VALID_RING)
+    is_ccw = spherical_area_sign(ring) > 0   # positive spherical area ↔ CCW outer convention
+    (is_ccw == (o == CCW)) ? ring : reverse(ring)
+end
+
 function split_antimeridian(ring::RING_CART{T}, o = orientation(ring)) where T <: AbstractFloat
     ptype = POINT_CART{T}
     segs = Vector{ptype}[]
@@ -85,7 +111,15 @@ function split_antimeridian(ring::RING_CART{T}, o = orientation(ring)) where T <
     # ring was flagged as pole-containing but never split (e.g. a degenerate offset artifact
     # whose crossing segment spans > 360° because its longitudes fall outside [-180, 180]),
     # there is nothing to close around and we fall through to the regular join path.
-    pole = contained_pole(ring)
+    #
+    # Pole identity is derived from the signed longitude winding, which encodes *which* pole the
+    # ring's interior encloses, and is therefore orientation-dependent. We must evaluate it on the
+    # ring brought to the target orientation `o` (CCW for outer rings, CW for holes); the source
+    # data is not guaranteed to follow that convention (e.g. NaturalEarth rings are often wound
+    # the other way), and reading the raw winding would otherwise pick the wrong pole. The
+    # orientation is established from the signed spherical area, since the planar `orientation`
+    # is degenerate for pole-enclosing rings.
+    pole = contained_pole(force_orientation_spherical(o, ring))
     if pole !== :none && close_around_pole!(segs, pole)
         return map(r -> force_orientation(o, Ring(r)), segs)
     end
