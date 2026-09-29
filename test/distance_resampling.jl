@@ -16,7 +16,8 @@
     onlypoly(x, T::Type = LatLon) = only(polyareas(T, x))
     onlyring(x, T::Type = LatLon) = only(rings(onlypoly(x, T)))
 
-    seglengths(x) = map(length, segments(onlyring(x, LatLon)))
+    # The Meshes length of a segment on 🌐 depends on the Meshes version, so we use the Haversine distance of GeoBasics
+    seglengths(x) = map(s -> GeoBasics.haversine_distance(extrema(s)...), segments(onlyring(x, LatLon)))
 end
 
 @testitem "distance_resampling" setup=[setup_distance] begin
@@ -25,7 +26,7 @@ end
     resampled = distance_resample(poly_gb, 2u"km")
 
     # We test that the total length has not changed (if not by minor rounding errors)
-    @test length(onlyring(poly_gb)) ≈ length(onlyring(resampled)) atol = 1u"m"
+    @test sum(seglengths(poly_gb)) ≈ sum(seglengths(resampled)) atol = 1u"m"
     # We also test that all original points are still present in the resampled polygon
     @test all(eachvertex(onlyring(poly_gb))) do v
         v in eachvertex(onlyring(resampled))
@@ -45,4 +46,8 @@ end
     not_resampled = distance_resample(poly_gb, target_dist)
 
     @test onlyring(poly_gb) == onlyring(not_resampled)
+
+    # The new points are on the flat (lon, lat) edges, so a large lat/lon box does not bulge poleward
+    box_gb = poly_borders([(0, 50), (90, 50), (90, 60), (0, 60)])
+    @test all(v -> 50 ≤ get_raw_lat(v) ≤ 60, eachvertex(onlyring(distance_resample(box_gb, 500u"km"))))
 end

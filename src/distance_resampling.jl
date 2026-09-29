@@ -1,16 +1,32 @@
+# Haversine distance between `p1` and `p2` on a sphere with the WGS84 major axis as radius.
+# This is the `measure(::Segment{🌐})` of Meshes up to v0.55. The code is local, so the result does not change with the Meshes version.
+function haversine_distance(p1::POINT_LATLON, p2::POINT_LATLON)
+    lon1, lat1 = to_raw_lonlat(p1)
+    lon2, lat2 = to_raw_lonlat(p2)
+    r = ustrip(u"m", CoordRefSystems.majoraxis(CoordRefSystems.ellipsoid(WGS84Latest))) |> typeof(lat1)
+    a = sind((lat2 - lat1) / 2)^2 + cosd(lat1) * cosd(lat2) * sind((lon2 - lon1) / 2)^2
+    return 2 * (r * asin(min(√a, one(a)))) * u"m"
+end
+
 function distance_resample(r::RING_LATLON, target_dist)
     target_dist = enforce_unit(u"m", target_dist)
+    T = valuetype(r)
     PT = eltype(vertices(r))
     resampled = PT[] # This will hold the new points of the ring sampled to achieve approximately the desired distance
     for s in segments(r)
-        normalized_step = target_dist / length(s)
+        a, b = extrema(s)
+        normalized_step = target_dist / haversine_distance(a, b)
         if normalized_step < 1
-            parametric_range = range(0, 1; step=normalized_step)
-            for p in parametric_range
-                push!(resampled, s(p))
+            lon1, lat1 = to_raw_lonlat(a)
+            lon2, lat2 = to_raw_lonlat(b)
+            for t in range(0, 1; step=normalized_step)
+                # Linear interpolation in (lat, lon), so the new points stay on the edges of the flat (lon, lat) polygon
+                lat = lat1 * (1 - t) + lat2 * t
+                lon = lon1 * (1 - t) + lon2 * t
+                push!(resampled, LatLon{WGS84Latest}(T(lat), T(lon)) |> Point)
             end
         else
-            push!(resampled, s(0))
+            push!(resampled, a)
         end
     end
     return Ring(resampled)

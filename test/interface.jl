@@ -187,7 +187,11 @@ end
         return SimpleGeometry(name, borders)
     end
 
-    ps = rand(PolyArea, 10; crs = LatLon)
+    f = to_latlon_point(Float64)
+
+    # Random rings self-intersect, thus no point is inside them by construction. The box gives a known inside point for the `in` tests.
+    # This box is different from the box in `mixed_vector` below, because `GeoBorders` removes duplicate polyareas.
+    ps = [rand(PolyArea, 10; crs = LatLon); Box(f((20,20)), f((30,30)))]
     sg = SimpleGeometry(ps)
 
     @test geoborders(sg) isa GeoBorders{Float64}
@@ -205,7 +209,7 @@ end
         @test @nallocs(bboxes(Cartesian, sg)) == 0
     end
 
-    p_sg = last(polyareas(Cartesian, sg)) |> centroid
+    p_sg = to_cartesian_point(Float64, (25, 25))
     @test in(p_sg, sg)
     @test @nallocs(in(p_sg, sg)) == 0
 
@@ -222,8 +226,6 @@ end
 
     GeoBasics.polyareas(T::VALID_CRS, wg::WeirdGeometry) = polyareas(T, wg.nt.borders)
     GeoBasics.bboxes(T::VALID_CRS, wg::WeirdGeometry) = bboxes(T, wg.nt.borders)
-
-    f = to_latlon_point(Float64)
 
     mixed_vector = []
     push!(mixed_vector, rand(PolyArea; crs = LatLon)) # A poly
@@ -244,7 +246,7 @@ end
         @test @nallocs(bboxes(Cartesian, wg)) == 0
     end
 
-    p_wg = last(polyareas(Cartesian, wg)) |> centroid
+    p_wg = to_cartesian_point(Float32, (5, 5)) # Inside the box of `mixed_vector`
     @test in(p_wg, wg)
     @test @nallocs(in(p_wg, wg)) == 0
     

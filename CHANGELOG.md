@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [1.3.1] - 2026-09-29
+### Changed
+- Updated the compat to include the latest versions of `CoordRefSystems.jl` (0.20/0.21) and `Meshes.jl` (0.58/0.59).
+
+### Fixed
+- `distance_resample` and `distance_resample!` now give the same result with all supported versions of `Meshes.jl`. The segment length is the Haversine distance on the WGS84 major axis and the new points are linearly interpolated in (lat, lon), so the resampled polygon keeps the shape of the original one. With `Meshes.jl` 0.58/0.59 the new points followed the geodesic, so large polygons were distorted toward the poles.
+
 ## [1.3.0] - 2026-06-22
 ### Fixed
 Two antimeridian/pole regressions introduced in v1.2.2, see [#6](https://github.com/JuliaSatcomFramework/GeoBasics.jl/pull/6) for details:
